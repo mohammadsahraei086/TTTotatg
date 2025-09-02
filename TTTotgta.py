@@ -14,7 +14,7 @@ class TTPairTotatg(processor.ProcessorABC):
     
     def __init__(self):
         self.categories = ["total", "emu", "ee", "mumu"]
-        self.variables = ["pt", "eta"]
+        self.variables = ["pt", "deltaPhiLL", "deltaEtaLL", ]
         self.luminosity = 138e3
     
     def define_output_layout(self, dataset):
