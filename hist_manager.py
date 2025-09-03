@@ -4,7 +4,7 @@ import hist
 import awkward as ak
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-
+from dataclasses import dataclass
 
 cms_color = {
     "blue": "#3f90da",
@@ -19,11 +19,90 @@ cms_color = {
     "light_blue": "#92dadd"
 }
 
+@dataclass
+class Axis:
+    field: str  # variable to plot
+    label: str  # human readable label for the axis
+    bins: int = None
+    start: float = None
+    stop: float = None
+    coll: str = "events"  # Collection or events or metadata or custom
+    name: str = None  # Identifier of the axis: By default is built as coll.field, if not provided
+    type: str = "regular"  # regular/variable/integer/intcat/strcat
+
+class Histogram:
+    def __init__(self, axes):
+        self.axes = axes
+        hist_axis = []
+        for axis in self.axes:
+            hist_axis.append(self.get_hist_axis(axis))
+        self.histogram = hist.Hist(*hist_axis)
+
+    def get_hist_axis(self, ax: Axis):
+        if ax.name == None:
+            ax.name = f"{ax.coll}.{ax.field}"
+        if ax.type == "regular" and isinstance(ax.bins, list):
+            ax.type = "variable"
+        if ax.type == "regular":
+            return hist.axis.Regular(
+                name=ax.name,
+                bins=ax.bins,
+                start=ax.start,
+                stop=ax.stop,
+                label=ax.label,
+                transform=ax.transform,
+                overflow=ax.overflow,
+                underflow=ax.underflow,
+                growth=ax.growth,
+            )
+        elif ax.type == "variable":
+            if not isinstance(ax.bins, list):
+                raise ValueError(
+                    "A list of bins edges is needed as 'bins' parameters for a type='variable' axis"
+                )
+            return hist.axis.Variable(
+                ax.bins,
+                name=ax.name,
+                label=ax.label,
+                overflow=ax.overflow,
+                underflow=ax.underflow,
+                growth=ax.growth,
+            )
+        elif ax.type == "int":
+            return hist.axis.Integer(
+                name=ax.name,
+                start=ax.start,
+                stop=ax.stop,
+                label=ax.label,
+                overflow=ax.overflow,
+                underflow=ax.underflow,
+                growth=ax.growth,
+            )
+        elif ax.type == "intcat":
+            return hist.axis.IntCategory(
+                ax.bins,
+                name=ax.name,
+                label=ax.label,
+                overflow=ax.overflow,
+                underflow=ax.underflow,
+                growth=ax.growth,
+            )
+        elif ax.type == "strcat":
+            return hist.axis.StrCategory(
+                ax.bins, name=ax.name, label=ax.label, growth=ax.growth
+            )
+
+    def fill(self, events):
+        
+        for axis in self.axes:
+            
+
 class HistManager:
     def __init__(self):
         pass
         
     def define_histograms(self):
+        self.define_axes()
         pt_bins = [ 20.,  35.,  50.,  70., 100., 130., 165., 200., 250., 300.]
         self.hist_pt = hist.Hist(
             hist.axis.Variable(pt_bins, name="pt", label="Photon pT [GeV]"),
@@ -35,7 +114,8 @@ class HistManager:
         )
         
     def fill_histogram(self, events, var, weight):
-        hist = getattr(self, f"hist_{var}")
+        if var == "pt":
+            hist = getattr(self, f"hist_{var}")
         fill_kwargs = {var: ak.flatten(getattr(events.GoodPhotons, var))}
         hist.fill(**fill_kwargs, weight=weight)
        

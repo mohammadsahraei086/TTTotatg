@@ -14,24 +14,30 @@ class TTPairTotatg(processor.ProcessorABC):
     
     def __init__(self):
         self.categories = ["total", "emu", "ee", "mumu"]
-        self.variables = ["pt", "deltaPhiLL", "deltaEtaLL", ]
+        self.axes = {
+            "photon_pt", 
+            "deltaPhiLL", 
+            "deltaEtaLL", 
+            "ptL1PlusptL2"
+        }
         self.luminosity = 138e3
     
     def define_output_layout(self, dataset):
-        self.output = {}
-        self.output["nEvents"] = {}
-        self.output["nEvents"]["primary"] = {}
-        self.output["nEvents"]["selected"] = {}
-        self.output["hists"] = {}
+        output = {}
+        output["nEvents"] = {}
+        output["nEvents"]["primary"] = {}
+        output["nEvents"]["selected"] = {}
+        output["hists"] = {}
         for cat in self.categories:
-            self.output["nEvents"]["selected"][cat] = {}
-            self.output["hists"][cat] = {}
+            output["nEvents"]["selected"][cat] = {}
+            output["hists"][cat] = {}
             for var in self.variables:
-                self.output["hists"][cat][var] = {}
+                output["hists"][cat][var] = {}
+        return output
 
     def process(self, events):
         dataset = events.metadata["dataset"]
-        self.define_output_layout(dataset)
+        self.output = self.define_output_layout(dataset)
         self.events = events
         self.output["nEvents"]["primary"][dataset] = len(self.events)
         lum_weight = (events.metadata["xsec"]*self.luminosity)/len(self.events)
