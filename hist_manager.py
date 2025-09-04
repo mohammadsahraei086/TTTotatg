@@ -1,10 +1,10 @@
 import numpy as np
-import json
 import hist
 import awkward as ak
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 from dataclasses import dataclass
+from typing import Callable, List, Optional
+
+from weight_manager import WeightManager
 
 cms_color = {
     "blue": "#3f90da",
@@ -21,22 +21,30 @@ cms_color = {
 
 @dataclass
 class Axis:
-    field: str  # variable to plot
-    label: str  # human readable label for the axis
+    name: str 
+    label: str 
     bins: int = None
     start: float = None
     stop: float = None
-    coll: str = "events"  # Collection or events or metadata or custom
-    name: str = None  # Identifier of the axis: By default is built as coll.field, if not provided
-    type: str = "regular"  # regular/variable/integer/intcat/strcat
+    type: str = "regular"
+    function: Optional[Callable] = None
+    
+    def __post_init__(self):
+        if self.function is not None:
+            self.get_variable = self.function
+    
+    def get_variable(self, events):
+        raise NotImplementedError(f"Provide a function parameter when creating Axis {self.name}")
 
 class Histogram:
-    def __init__(self, axes):
+    def __init__(self,name, axes:List[Axis], weights:List[str]):
+        self.name = name
         self.axes = axes
         hist_axis = []
         for axis in self.axes:
             hist_axis.append(self.get_hist_axis(axis))
-        self.histogram = hist.Hist(*hist_axis)
+        self.weights = weights
+        self.histogram = hist.Hist(*hist_axis, name=name, storage="weight")
 
     def get_hist_axis(self, ax: Axis):
         if ax.name == None:
@@ -50,10 +58,6 @@ class Histogram:
                 start=ax.start,
                 stop=ax.stop,
                 label=ax.label,
-                transform=ax.transform,
-                overflow=ax.overflow,
-                underflow=ax.underflow,
-                growth=ax.growth,
             )
         elif ax.type == "variable":
             if not isinstance(ax.bins, list):
@@ -63,282 +67,78 @@ class Histogram:
             return hist.axis.Variable(
                 ax.bins,
                 name=ax.name,
-                label=ax.label,
-                overflow=ax.overflow,
-                underflow=ax.underflow,
-                growth=ax.growth,
+                label=ax.label
             )
         elif ax.type == "int":
             return hist.axis.Integer(
                 name=ax.name,
                 start=ax.start,
                 stop=ax.stop,
-                label=ax.label,
-                overflow=ax.overflow,
-                underflow=ax.underflow,
-                growth=ax.growth,
+                label=ax.label
             )
         elif ax.type == "intcat":
             return hist.axis.IntCategory(
                 ax.bins,
                 name=ax.name,
-                label=ax.label,
-                overflow=ax.overflow,
-                underflow=ax.underflow,
-                growth=ax.growth,
+                label=ax.label
             )
         elif ax.type == "strcat":
             return hist.axis.StrCategory(
-                ax.bins, name=ax.name, label=ax.label, growth=ax.growth
+                ax.bins, name=ax.name, label=ax.label
             )
 
     def fill(self, events):
-        
+        ax = {}
         for axis in self.axes:
-            
+            ax[axis.name] = axis.get_variable(events)
+        weight_manager = WeightManager()
+        weight = weight_manager.get_weights(events, *self.weights)
+        self.histogram.fill(**ax, weight=weight)
 
 class HistManager:
     def __init__(self):
-        pass
+        self.axes = {}
+        self.histograms = {}
+        
+    def define_axes(self):
+        self.add_axis("photon_pt",
+                      "$p_T(\gamma) (GeV)$",
+                      [ 20.,  35.,  50.,  70., 100., 130., 165., 200., 250., 300.],
+                      type = "variable",
+                      function = lambda events: ak.flatten(events.GoodPhotons.pt)
+                     )
         
     def define_histograms(self):
-        self.define_axes()
-        pt_bins = [ 20.,  35.,  50.,  70., 100., 130., 165., 200., 250., 300.]
-        self.hist_pt = hist.Hist(
-            hist.axis.Variable(pt_bins, name="pt", label="Photon pT [GeV]"),
-            storage="weight",
-        )
-        self.hist_eta = hist.Hist(
-            hist.axis.Regular(15, -1.44, 1.44, name="eta", label="Photon η"),
-            storage="weight",
-        )
+        self.add_histogram("photon_pt",
+                           [self.axes["photon_pt"]],
+                           ["xsec", "luminosity", "sum_genweight"]
+                          )
+        self.add_histogram("diff_xsec_photon_pt",
+                           [self.axes["photon_pt"]],
+                           ["xsec", "sum_genweight"]
+                          )
         
-    def fill_histogram(self, events, var, weight):
-        if var == "pt":
-            hist = getattr(self, f"hist_{var}")
-        fill_kwargs = {var: ak.flatten(getattr(events.GoodPhotons, var))}
-        hist.fill(**fill_kwargs, weight=weight)
-       
-        return hist
+    def add_axis(self,
+                 name,
+                 label: str,
+                 bins: int = None,
+                 start: float = None,
+                 stop: float = None,
+                 type: str = "regular",
+                 function: Optional[Callable] = None
+                ):
+        self.axes[name] = Axis(name, label, bins, start, stop, type, function)
+        
+    def add_histogram(self,
+                      name,
+                      axes:List[str],
+                      weights:[]
+                     ):
+        self.histograms[name] = Histogram(name, axes, weights)
+        
+    def get_histogram(self, name):
+        return self.histograms[name]
     
-    def create_CMS_histograms(self, filename):
-        
-        with open(filename, 'r') as f:
-            file = json.load(f)
-            
-        group_map = {}
-        for i, dictionary in enumerate(file["headers"]):
-            if i == 0:
-                variable = dictionary["name"]
-                continue
-            group_map[i-1] = dictionary["name"]
-
-        bin_list = []
-        bin_centers = []
-        histograms = {}
-        values = {}
-        errors = {"stat": [], "syst": []}
-        for group in group_map.values():
-            values[group] = []
-
-        for i, dic in enumerate(file["values"]):
-            if i == 0:
-                bin_list.append(float(dic['x'][0]["low"]))
-            bin_list.append(float(dic["x"][0]["high"]))
-
-            for j,y in enumerate(dic["y"]):
-                values[group_map[y["group"]]].append(float(y["value"]))
-                if "stat" in y["errors"][0].values():
-                    errors["stat"].append(float(y["errors"][0]["symerror"]))
-                if "syst" in y["errors"][0].values():
-                    errors["syst"].append(float(y["errors"][0]["symerror"]))
-        for group in group_map.values():
-            histograms[group] = hist.Hist(hist.axis.Variable(list(map(float, bin_list)), name=variable))
-            histograms[group][:] = values[group]
-
-        histograms["errors"] = errors
-
-        return histograms
-
-    def extract_hist_data(self, channel, normalize):
-        
-        self.histograms = self.hist_info[channel]["pt"]
-        #Inforamtion from arXiv: 2201.07301v2 and https://www.hepdata.net/record/ins2013377
-        cms_info = self.create_CMS_histograms(f"{channel}.json")
-        self.histograms.update(cms_info)
-        self.define_histograms()
-        self.bins = self.hist_pt.axes[0].edges
-        self.centers = []
-        for i in range(len(self.bins)-1):
-            center = (self.bins[i] + self.bins[i+1]) / 2
-            self.centers.append(center)
-        self.bin_widths = np.diff(self.bins)
-        self.errors = self.histograms["errors"]
-        self.data_values = np.array(self.histograms["Observed"].values())
-        self.mc_values = np.array(self.histograms["Total prediction"].values())
-        self.mc_components = {}
-        for sample in self.histograms.keys():
-            if sample not in ["Observed", "Total prediction", "errors"] and "Signal" not in sample:
-                self.mc_components[sample] = np.array(self.histograms[sample].values())
-        self.signal_components = {}
-        for signal in self.histograms.keys():
-            if "Signal" in signal:
-                self.signal_components[signal] = np.array(self.histograms[signal].values())
-        if normalize:
-            self.errors["stat"] = self.errors["stat"]/(np.sum(self.data_values)*self.bin_widths)
-            self.errors["syst"] = self.errors["syst"]/(np.sum(self.mc_values)*self.bin_widths)
-            self.data_values = self.data_values/(np.sum(self.data_values)*self.bin_widths)
-            for sample in self.mc_components.keys():
-                self.mc_components[sample] = self.mc_components[sample]/(np.sum(self.mc_values)*self.bin_widths)
-            self.mc_values = self.mc_values/(np.sum(self.mc_values)*self.bin_widths)
-            for signal in self.histograms.keys():
-                if "Signal" in signal:
-                    self.signal_components[signal] = self.signal_components[signal]/(np.sum(self.signal_components[signal])*self.bin_widths)
-                
-        self.colors = [cms_color["orange"], cms_color["purple"], cms_color["red"], cms_color["beige"], cms_color["blue"], cms_color["dark_gray"],]
-                
-    def define_figure(self):
-        self.fig, (self.ax, self.rax) = plt.subplots(
-            2, 1, figsize=(10, 8), 
-            gridspec_kw={"height_ratios": [3, 1], "hspace": 0.0}, 
-            sharex=True
-        )
+    def get_histograms(self):
+        return self.histograms
     
-    def plot_datamc(self, signals, channel):
-        bottom = np.zeros(len(self.centers))
-        for i, (name, values) in enumerate(self.mc_components.items()):
-            self.ax.bar(
-                self.centers, values, width=self.bin_widths,
-                bottom=bottom, alpha=0.8, label=name, color=self.colors[i],
-                edgecolor='black', linewidth=0.5
-            )
-            bottom += values
-            
-        self.ax.errorbar(
-            self.centers, self.data_values, yerr=self.errors["stat"],
-            fmt='o', color='black', markersize=6, capsize=4,
-            linewidth=2, label='Data'
-        )
-        
-        for i, signal in enumerate(signals):
-            values = self.signal_components[signal]
-            self.ax.bar(
-                self.centers, values, width=self.bin_widths,
-                alpha=1, label=signal, edgecolor=self.colors[-i-1],
-                linewidth=1, fill=False
-            )
-        
-        self.ax.fill_between(
-            self.centers,
-            self.mc_values - self.errors["syst"],
-            self.mc_values + self.errors["syst"],
-            step='mid', facecolor="None", alpha=0.9, hatch='////',
-            label='Syst. Unc.', edgecolor='black', linewidth=0
-        )
-        
-        cats = {"emu": "$e\mu$", "ee": "$ee$", "mumu": "$\mu\mu$"}
-        self.ax.text(0.75, 0.45, cats[channel], transform=self.ax.transAxes, 
-               fontsize=20, fontweight='bold', va='top')
-        
-        self.ax.set_ylabel('Events', fontsize=15)
-        self.ax.legend(fontsize=10)
-        self.ax.grid(True, alpha=0.3)
-        self.ax.set_title('Data/MC Comparison', fontsize=16)
-        
-    def plot_ratio(self):
-        ratio = self.data_values / self.mc_values
-        ratio_err = self.errors["stat"] / self.mc_values
-
-        # Plot ratio
-        self.rax.errorbar(self.centers, ratio, yerr=ratio_err, 
-                          fmt='o', color='black', markersize=5, linewidth=1.5,
-                          capsize=3, capthick=1.5, label='Data/MC')
-
-        self.rax.axhline(y=1.0, color='red', linestyle='--', linewidth=1.5)
-
-        syst_unc_ratio = self.errors["syst"] / self.mc_values
-        self.rax.fill_between(self.centers, 1 - syst_unc_ratio, 1 + syst_unc_ratio,
-                 step='mid', facecolor="None", alpha=0.9, hatch='////',
-                 label='Syst. Unc.', edgecolor='black', linewidth=0)
-
-        # Set labels and limits
-        self.rax.set_xlabel('p$_T$ [GeV]')
-        self.rax.set_ylabel('Data/MC')
-        self.rax.set_ylim(0.5, 1.5)
-        self.rax.set_xlim(self.bins[0], self.bins[-1])
-        self.rax.grid(True, alpha=0.3)
-        self.rax.set_xlim(self.ax.get_xlim())
-
-        # Add bin edges as x-ticks
-        # ax_bottom.set_xticks(bins)
-
-            
-    def plot_histograms(self, hist_info, channel="total", signal=[], normalize=False):
-        self.hist_info = hist_info
-        name = f"photon_pt_{channel}"
-        if len(signal):
-            name = name + "_Signal"
-        if normalize:
-            name = name + "_normalized"
-            
-        self.extract_hist_data(channel, normalize)
-        self.define_figure()
-        self.plot_datamc(signal, channel)
-        self.plot_ratio()
-        plt.savefig(f"plots/{name}.png", dpi=300, bbox_inches="tight")
-        # plt.savefig(f"plots/{name}.pdf", bbox_inches="tight")
-        plt.close()
-
-    def plot_signal_histograms(self, hist_dict, output_dir="plots", normalize = ""):
-        
-        os.makedirs(output_dir, exist_ok=True)
-
-        for name, h in hist_dict.items():
-            if normalize != "":
-                bin_widths = np.diff(h.axes[0].edges)
-                h = h/(h.sum().value*bin_widths)
-            plt.figure()
-            h.plot(
-                histtype="fill",  
-                # edgecolor="black",     
-                linewidth=1.5,        
-                alpha=0.7,
-                color="blue",
-            ) 
-
-            if name == "pt":
-                plt.xlabel("$p_T(\gamma)$ [GeV]")
-                plt.title(f"Photon $p_T$, {normalize}, $T_{{mass}}=1000$")
-            elif name == "eta":
-                plt.xlabel("$\eta(\gamma)$")
-                plt.title(f"Photon $\eta$, {normalize}, $T_{{mass}}=1000$")
-            if normalize != "":
-                plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0), useMathText=True)
-                plt.gca().yaxis.get_offset_text().set_visible(True)  # Show multiplier
-            plt.ylabel("Events")
-            plt.grid(True, linestyle="--", alpha=0.5)
-            
-
-            if normalize == "":
-                x = h.axes[0].centers
-                y = h.values()
-                plt.fill_between(x, y-np.sqrt(y), y+np.sqrt(y),
-                                 step="mid",
-                                 facecolor='none',
-                                 hatch="////",
-                                 edgecolor='black',
-                                 linewidth=0,
-                                 alpha=0.5
-                                )            
-                error_patch = Patch(
-                    facecolor='none',
-                    edgecolor='black',
-                    linewidth=0,
-                    hatch='////',
-                    label='Stat Error'
-                )
-                plt.legend(handles=[error_patch], loc='best')
-
-            plt.savefig(f"{output_dir}/{normalize}photon_{name}.png", dpi=300, bbox_inches="tight")
-            plt.savefig(f"{output_dir}/{normalize}photon_{name}.pdf", bbox_inches="tight")
-            plt.close() 

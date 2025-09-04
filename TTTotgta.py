@@ -1,28 +1,22 @@
 import time
-import numpy as np
-import awkward as ak
-import os
 
 from coffea import processor
 from coffea.nanoevents import DelphesSchema
 
-import coffea
-
-# from distributed import Client
+from hist_manager import HistManager
+from object_selector import ObjectSelector
+from event_selector import EventSelector
 
 class TTPairTotatg(processor.ProcessorABC):
     
     def __init__(self):
+        self.hist_manager = HistManager()
+        self.hist_manager.define_axes()
+        self.hist_manager.define_histograms()
+        self.histograms = self.hist_manager.get_histograms()
         self.categories = ["total", "emu", "ee", "mumu"]
-        self.axes = {
-            "photon_pt", 
-            "deltaPhiLL", 
-            "deltaEtaLL", 
-            "ptL1PlusptL2"
-        }
-        self.luminosity = 138e3
     
-    def define_output_layout(self, dataset):
+    def define_output_layout(self):
         output = {}
         output["nEvents"] = {}
         output["nEvents"]["primary"] = {}
@@ -31,42 +25,40 @@ class TTPairTotatg(processor.ProcessorABC):
         for cat in self.categories:
             output["nEvents"]["selected"][cat] = {}
             output["hists"][cat] = {}
-            for var in self.variables:
-                output["hists"][cat][var] = {}
+            for hist in self.histograms:
+                output["hists"][cat][hist] = {}
         return output
 
     def process(self, events):
         dataset = events.metadata["dataset"]
-        self.output = self.define_output_layout(dataset)
+        self.output = self.define_output_layout()
         self.events = events
         self.output["nEvents"]["primary"][dataset] = len(self.events)
-        lum_weight = (events.metadata["xsec"]*self.luminosity)/len(self.events)
+        self.events["n_primary"] = len(self.events)
 
         object_selector = ObjectSelector(self.events)
         object_selector.select_good_objects()
         object_selector.count_good_objects()
         
-        events_selector = EventSelector(self.events)
-        hist_manager = HistManager()
-        hist_manager.define_histograms()
+        event_selector = EventSelector(self.events)
 
         for cat in self.categories:
-            selected_events = events_selector.select_good_events(cat)
+            selected_events = event_selector.select_good_events(cat)
             self.output["nEvents"]["selected"][cat][dataset] = len(selected_events)
-            for var in self.variables:
-                self.output["hists"][cat][var][dataset] = hist_manager.fill_histogram(selected_events, var, weight=lum_weight)
+            for name, hist in self.histograms.items():
+                self.output["hists"][cat][name][dataset] = hist.fill(selected_events)
         
         return self.output
 
     def postprocess(self, accumulator):
-        
-        hist_manager = HistManager()
-        hist_manager.define_histograms()
-        for cat in self.categories:
-            if cat == "total":
-                continue
-            hist_manager.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_500", "Signal_1000"])
-            hist_manager.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_500", "Signal_1000"], normalize=True)
+        pass
+        # hist_manager = HistManager()
+        # hist_manager.define_histograms()
+        # for cat in self.categories:
+        #     if cat == "total":
+        #         continue
+        #     hist_manager.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_500", "Signal_1000"])
+        #     hist_manager.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_500", "Signal_1000"], normalize=True)
 
 
 #####################################################################################################################
@@ -91,15 +83,6 @@ def main():
             }
         }
     }
-
-#     dataset_runnable, dataset_updated = preprocess(
-#         fileset,
-#         align_clusters=False,
-#         step_size=100_00,
-#         files_per_batch=1,
-#         save_form=False,
-#     )
-
     tstart = time.time()
     
 #     futures_run = processor.Runner(
@@ -126,11 +109,6 @@ def main():
         processor_instance=TTPairTotatg(),
     )
     print(out)
-    
-    # for i in out['Lepton']:
-    #     print(i)
-    # for i in out['arg']:
-    #     print(i)
     
     elapsed = time.time() - tstart
     print(elapsed)
