@@ -95,6 +95,9 @@ class Histogram:
         weight = weight_manager.get_weights(events, *self.weights)
         self.histogram.fill(**ax, weight=weight)
 
+    def get_histogram(self):
+        return self.histogram
+
 class HistManager:
     def __init__(self):
         self.axes = {}
@@ -107,6 +110,30 @@ class HistManager:
                       type = "variable",
                       function = lambda events: ak.flatten(events.GoodPhotons.pt)
                      )
+        self.add_axis("xsec_photon_pt",
+                      "$p_T(\gamma) (GeV)$",
+                      [ 20.,  35.,  50.,  70., 130., 200., 300.],
+                      type = "variable",
+                      function = lambda events: ak.flatten(events.GoodPhotons.pt)
+                     )
+        self.add_axis("deltaeta_ll",
+                      "$|\Delta\eta(\ell\ell)|$",
+                      [0, 0.5, 1, 1.5, 2, 2.5, 3, 4.5],
+                      type = "variable",
+                      function = lambda events: abs(events.GoodLeptons[:, 0].eta-events.GoodLeptons[:, 1].eta)
+                     )
+        self.add_axis("deltaphi_ll",
+                      "$\Delta \phi(\ell\ell)$",
+                      [0, 0.4, 0.8, 1.2, 1.6, 2, 2.4, 2.8, 3.2],
+                      type = "variable",
+                      function = lambda events: abs(events.GoodLeptons[:, 0].phi-events.GoodLeptons[:, 1].phi)
+                     )
+        self.add_axis("ptl1plusptl2",
+                      "$p_{T}(\ell_{1})+p_{T}(\ell_{2})$",
+                      [40, 70, 100, 140, 190, 250, 330, 500],
+                      type = "variable",
+                      function = lambda events: events.GoodLeptons[:, 0].pt+events.GoodLeptons[:, 1].pt
+                     )
         
     def define_histograms(self):
         self.add_histogram("photon_pt",
@@ -114,8 +141,20 @@ class HistManager:
                            ["xsec", "luminosity", "sum_genweight"]
                           )
         self.add_histogram("diff_xsec_photon_pt",
-                           [self.axes["photon_pt"]],
-                           ["xsec", "sum_genweight"]
+                           [self.axes["xsec_photon_pt"]],
+                           ["xsec", "luminosity", "sum_genweight"]
+                          )
+        self.add_histogram("deltaeta_ll",
+                           [self.axes["deltaeta_ll"]],
+                           ["xsec", "luminosity", "sum_genweight"]
+                          )
+        self.add_histogram("deltaphi_ll",
+                           [self.axes["deltaphi_ll"]],
+                           ["xsec", "luminosity", "sum_genweight"]
+                          )
+        self.add_histogram("ptl1plusptl2",
+                           [self.axes["ptl1plusptl2"]],
+                           ["xsec", "luminosity", "sum_genweight"]
                           )
         
     def add_axis(self,
