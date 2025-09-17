@@ -32,8 +32,8 @@ class HistogramXSecPlotter:
         self.signal_components = {}
         for signal in self.histograms.keys():
             if "Signal" in signal:
-                epsilon = np.sum(self.histograms[signal].values())/10000
-                self.signal_components[signal] = np.array(self.histograms[signal].values())/(epsilon*138*self.bin_widths)
+                # epsilon = self.histograms[signal].values()/10000
+                self.signal_components[signal] = np.array(self.histograms[signal].values())/(138*self.bin_widths)
         self.x_axis_name = self.histograms["Observed"].axes[0].label
         if normalize:
             self.errors["stat"] = self.errors["stat"]/(np.sum(self.data_values)*self.bin_widths)

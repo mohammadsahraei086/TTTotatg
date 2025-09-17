@@ -6,19 +6,6 @@ from typing import Callable, List, Optional
 
 from weight_manager import WeightManager
 
-cms_color = {
-    "blue": "#3f90da",
-    "orange": "#ffa90e",
-    "red": "#bd1f01",
-    "gray": "#94a4a2",
-    "purple": "#832db6",
-    "brown": "#a96b59",
-    "dark_prange": "#e76300",
-    "beige": "#b9ac70",
-    "dark_gray": "#717581",
-    "light_blue": "#92dadd"
-}
-
 @dataclass
 class Axis:
     name: str 
