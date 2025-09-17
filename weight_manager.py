@@ -18,5 +18,4 @@ class WeightManager:
         return self.run2_luminosity
     
     def sum_genweight(self, events):
-        print(1./events["n_primary"])
         return 1./events["n_primary"]

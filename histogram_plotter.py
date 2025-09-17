@@ -1,55 +1,75 @@
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+import json
+import hist
+
+cms_color = {
+    "blue": "#3f90da",
+    "orange": "#ffa90e",
+    "red": "#bd1f01",
+    "gray": "#94a4a2",
+    "purple": "#832db6",
+    "brown": "#a96b59",
+    "dark_prange": "#e76300",
+    "beige": "#b9ac70",
+    "dark_gray": "#717581",
+    "light_blue": "#92dadd"
+}
+
+def create_CMS_histograms(filename):
+        
+    with open(filename, 'r') as f:
+        file = json.load(f)
+        
+    group_map = {}
+    for i, dictionary in enumerate(file["headers"]):
+        if i == 0:
+            variable = dictionary["name"]
+            continue
+        group_map[i-1] = dictionary["name"]
+
+    bin_list = []
+    bin_centers = []
+    histograms = {}
+    values = {}
+    errors = {"stat": [], "syst": [], "theory unc.": []}
+    for group in group_map.values():
+        values[group] = []
+
+    for i, dic in enumerate(file["values"]):
+        if i == 0:
+            bin_list.append(float(dic['x'][0]["low"]))
+        bin_list.append(float(dic["x"][0]["high"]))
+
+        for j,y in enumerate(dic["y"]):
+            values[group_map[y["group"]]].append(float(y["value"]))
+            if "stat" in y["errors"][0].values():
+                errors["stat"].append(float(y["errors"][0]["symerror"]))
+            if "syst" in y["errors"][0].values():
+                errors["syst"].append(float(y["errors"][0]["symerror"]))
+            if "theory unc." in y["errors"][0].values():
+                errors["theory unc."].append(float(y["errors"][0]["symerror"]))
+    for group in group_map.values():
+        histograms[group] = hist.Hist(hist.axis.Variable(list(map(float, bin_list)), label=variable))
+        histograms[group][:] = values[group]
+
+    histograms["errors"] = errors
+
+    return histograms
 
 
 class HistogramPlotter:
-        def create_CMS_histograms(self, filename):
+    def __init__(self):
+        pass
         
-        with open(filename, 'r') as f:
-            file = json.load(f)
-            
-        group_map = {}
-        for i, dictionary in enumerate(file["headers"]):
-            if i == 0:
-                variable = dictionary["name"]
-                continue
-            group_map[i-1] = dictionary["name"]
-
-        bin_list = []
-        bin_centers = []
-        histograms = {}
-        values = {}
-        errors = {"stat": [], "syst": []}
-        for group in group_map.values():
-            values[group] = []
-
-        for i, dic in enumerate(file["values"]):
-            if i == 0:
-                bin_list.append(float(dic['x'][0]["low"]))
-            bin_list.append(float(dic["x"][0]["high"]))
-
-            for j,y in enumerate(dic["y"]):
-                values[group_map[y["group"]]].append(float(y["value"]))
-                if "stat" in y["errors"][0].values():
-                    errors["stat"].append(float(y["errors"][0]["symerror"]))
-                if "syst" in y["errors"][0].values():
-                    errors["syst"].append(float(y["errors"][0]["symerror"]))
-        for group in group_map.values():
-            histograms[group] = hist.Hist(hist.axis.Variable(list(map(float, bin_list)), name=variable))
-            histograms[group][:] = values[group]
-
-        histograms["errors"] = errors
-
-        return histograms
-
     def extract_hist_data(self, channel, normalize):
         
-        self.histograms = self.hist_info[channel]["pt"]
+        self.histograms = self.hist_info[channel]["photon_pt"]
         #Inforamtion from arXiv: 2201.07301v2 and https://www.hepdata.net/record/ins2013377
-        cms_info = self.create_CMS_histograms(f"{channel}.json")
+        cms_info = create_CMS_histograms(f"json_files/{channel}.json")
         self.histograms.update(cms_info)
-        self.define_histograms()
-        self.bins = self.hist_pt.axes[0].edges
+        self.bins = self.histograms["Observed"].axes[0].edges
         self.centers = []
         for i in range(len(self.bins)-1):
             center = (self.bins[i] + self.bins[i+1]) / 2
@@ -98,23 +118,24 @@ class HistogramPlotter:
             
         self.ax.errorbar(
             self.centers, self.data_values, yerr=self.errors["stat"],
-            fmt='o', color='black', markersize=6, capsize=4,
+            fmt='o', color='black', markersize=5, capsize=0,
             linewidth=2, label='Data'
         )
         
         for i, signal in enumerate(signals):
             values = self.signal_components[signal]
-            self.ax.bar(
-                self.centers, values, width=self.bin_widths,
-                alpha=1, label=signal, edgecolor=self.colors[-i-1],
-                linewidth=1, fill=False
+            self.ax.step(
+                self.bins, np.append(values, values[-1]), where="post",
+                alpha=1, linestyle="dashed", label=signal, color=self.colors[-i-1], linewidth=2
             )
-        
+
+        lower = self.mc_values - self.errors["syst"]
+        upper = self.mc_values + self.errors["syst"]
         self.ax.fill_between(
-            self.centers,
-            self.mc_values - self.errors["syst"],
-            self.mc_values + self.errors["syst"],
-            step='mid', facecolor="None", alpha=0.9, hatch='////',
+            self.bins,
+            np.append(lower, lower[-1]),
+            np.append(upper, upper[-1]),
+            step='post', facecolor="None", alpha=0.9, hatch='////',
             label='Syst. Unc.', edgecolor='black', linewidth=0
         )
         
@@ -139,8 +160,10 @@ class HistogramPlotter:
         self.rax.axhline(y=1.0, color='red', linestyle='--', linewidth=1.5)
 
         syst_unc_ratio = self.errors["syst"] / self.mc_values
-        self.rax.fill_between(self.centers, 1 - syst_unc_ratio, 1 + syst_unc_ratio,
-                 step='mid', facecolor="None", alpha=0.9, hatch='////',
+        lower = 1 - syst_unc_ratio
+        upper = 1 + syst_unc_ratio
+        self.rax.fill_between(self.bins, np.append(lower, lower[-1]), np.append(upper, upper[-1]),
+                 step='post', facecolor="None", alpha=0.9, hatch='////',
                  label='Syst. Unc.', edgecolor='black', linewidth=0)
 
         # Set labels and limits
