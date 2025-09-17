@@ -1,6 +1,7 @@
 import time
 
 from coffea import processor
+from coffea.util import save
 from coffea.nanoevents import DelphesSchema
 
 from hist_manager import HistManager
@@ -109,6 +110,7 @@ def main():
         processor_instance=TTPairTotatg(),
     )
     print(out)
+    save(out, 'output/output.coffea')
     
     elapsed = time.time() - tstart
     print(elapsed)
