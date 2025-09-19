@@ -9,7 +9,9 @@ from object_selector import ObjectSelector
 from event_selector import EventSelector
 from histogram_plotter import HistogramPlotter
 from histogram_xsec_plotter import HistogramXSecPlotter
-from fileset import fileset
+from fileset import fileset_laptop, fileset_pc
+
+fileset = fileset_laptop
 
 class TTPairTotatg(processor.ProcessorABC):
     
@@ -62,35 +64,17 @@ class TTPairTotatg(processor.ProcessorABC):
         for cat in self.categories:
             if cat == "total":
                 for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-                    xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_500", "Signal_1000"])
-                    xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_500", "Signal_1000"], normalize=True)
+                    xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"])
+                    xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"], normalize=True)
             else:
                 # hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400"])
-                hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_500", "Signal_1000"], normalize=True)
+                hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400", "Signal_1000"], normalize=True)
 
 
 #####################################################################################################################
 def main():
     # client = Client()
 
-    fileset = {
-        "Signal_500":{
-            "files":{
-                "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_02/tag_1_delphes_events.root":"Delphes"
-                },
-            "metadata":{
-                "xsec": 3.959e-05
-            }
-        },
-        "Signal_1000":{
-            "files":{
-                "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_03/tag_1_delphes_events.root":"Delphes"
-            },
-            "metadata":{
-                "xsec": 6.409e-05
-            }
-        }
-    }
     tstart = time.time()
     
 #     futures_run = processor.Runner(
