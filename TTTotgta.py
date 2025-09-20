@@ -23,22 +23,29 @@ class TTPairTotatg(processor.ProcessorABC):
         self.categories = ["total", "emu", "ee", "mumu"]
     
     def define_output_layout(self):
+        masses = set([])
+        for item in fileset:
+            masses.add(item["metadata"]["mass"])
         output = {}
+        output["metadata"] = {}
         output["nEvents"] = {}
         output["nEvents"]["primary"] = {}
         output["nEvents"]["selected"] = {}
         output["hists"] = {}
-        for cat in self.categories:
-            output["nEvents"]["selected"][cat] = {}
-            output["hists"][cat] = {}
-            for hist in self.histograms:
-                output["hists"][cat][hist] = {}
+        for mass in masses:
+            for cat in self.categories:
+                output["nEvents"]["selected"][cat].update({mass:{}})
+                output["hists"][cat] = {}
+                for hist in self.histograms:
+                    output["hists"][cat][hist].update({mass:{}})
         return output
 
     def process(self, events):
         dataset = events.metadata["dataset"]
+        mass = events.metadata["mass"]
         self.output = self.define_output_layout()
         self.events = events
+        self.output["metadata"][dataset] = events.metadata
         self.output["nEvents"]["primary"][dataset] = len(self.events)
         self.events["n_primary"] = len(self.events)
 
@@ -50,25 +57,25 @@ class TTPairTotatg(processor.ProcessorABC):
 
         for cat in self.categories:
             selected_events = event_selector.select_good_events(cat)
-            self.output["nEvents"]["selected"][cat][dataset] = len(selected_events)
+            self.output["nEvents"]["selected"][cat][mass][dataset] = len(selected_events)
             for name, hist in self.histograms.items():
                 hist.fill(selected_events)
-                self.output["hists"][cat][name][dataset] = hist.get_histogram()
+                self.output["hists"][cat][name][mass][dataset] = hist.get_histogram()
         
         return self.output
 
     def postprocess(self, accumulator):
-        print(accumulator)
-        hist_plotter = HistogramPlotter()
-        xsec_hist_plotter = HistogramXSecPlotter()
-        for cat in self.categories:
-            if cat == "total":
-                for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-                    xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"])
-                    xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"], normalize=True)
-            else:
-                # hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400"])
-                hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400", "Signal_1000"], normalize=True)
+        # hist_plotter = HistogramPlotter()
+        # xsec_hist_plotter = HistogramXSecPlotter()
+        # for cat in self.categories:
+        #     if cat == "total":
+        #         for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
+        #             xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"])
+        #             xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"], normalize=True)
+        #     else:
+        #         # hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400"])
+        #         hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400", "Signal_1000"], normalize=True)
+        pass
 
 
 #####################################################################################################################
