@@ -33,6 +33,7 @@ class TTPairTotatg(processor.ProcessorABC):
         output["nEvents"]["selected"] = {}
         output["hists"] = {}
         for mass in masses:
+            output["metadata"]["mass"] = {}
             for cat in self.categories:
                 output["nEvents"]["selected"][cat].update({mass:{}})
                 output["hists"][cat] = {}
@@ -45,7 +46,7 @@ class TTPairTotatg(processor.ProcessorABC):
         mass = events.metadata["mass"]
         self.output = self.define_output_layout()
         self.events = events
-        self.output["metadata"][dataset] = events.metadata
+        self.output["metadata"][mass][dataset] = events.metadata
         self.output["nEvents"]["primary"][dataset] = len(self.events)
         self.events["n_primary"] = len(self.events)
 
