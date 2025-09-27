@@ -247,3 +247,12 @@ class HistogramPlotter:
             plt.savefig(f"{output_dir}/{normalize}photon_{name}.png", dpi=300, bbox_inches="tight")
             plt.savefig(f"{output_dir}/{normalize}photon_{name}.pdf", bbox_inches="tight")
             plt.close() 
+            
+            
+if __name__ == "__main__":
+    # hist_plotter = HistogramPlotter()
+    output = load("output/output.coffea")
+    for cat in self.categories:
+        if cat != "total":
+            # hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400"])
+            hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400", "Signal_1000"], normalize=True)

@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import json
 
+from coffea.util import load
+
 from histogram_plotter import create_CMS_histograms, cms_color
 
 class HistogramXSecPlotter:
@@ -157,3 +159,17 @@ class HistogramXSecPlotter:
         plt.savefig(f"plots/{name}.png", dpi=300, bbox_inches="tight")
         # plt.savefig(f"plots/{name}.pdf", bbox_inches="tight")
         plt.close()
+        
+        
+if __name__ == "__main__":
+    # hist_plotter = HistogramPlotter()
+    xsec_hist_plotter = HistogramXSecPlotter()
+    output = load("output/output.coffea")
+    histograms = {}
+    for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
+        histograms[hist] = {}
+        for mass, hist_dic in output["hists"]["total"][hist].items():
+            histograms[hist][f"Signal_{int(mass)}"] = hist_dic[f"Signal_{int(mass)}_1p0"]
+    for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
+        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_1000"])
+        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_1000"], normalize=True)

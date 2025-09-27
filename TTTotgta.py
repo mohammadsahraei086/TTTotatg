@@ -7,11 +7,9 @@ from coffea.nanoevents import DelphesSchema
 from hist_manager import HistManager
 from object_selector import ObjectSelector
 from event_selector import EventSelector
-from histogram_plotter import HistogramPlotter
-from histogram_xsec_plotter import HistogramXSecPlotter
-from fileset import fileset_laptop, fileset_pc
+from fileset import *
 
-fileset = fileset_laptop
+fileset = fileset_pc_limit
 
 class TTPairTotatg(processor.ProcessorABC):
     
@@ -24,8 +22,8 @@ class TTPairTotatg(processor.ProcessorABC):
     
     def define_output_layout(self):
         masses = set([])
-        for item in fileset:
-            masses.add(item["metadata"]["mass"])
+        for item, dic in fileset.items():
+            masses.add(dic["metadata"]["mass"])
         output = {}
         output["metadata"] = {}
         output["nEvents"] = {}
@@ -33,12 +31,17 @@ class TTPairTotatg(processor.ProcessorABC):
         output["nEvents"]["selected"] = {}
         output["hists"] = {}
         for mass in masses:
-            output["metadata"]["mass"] = {}
-            for cat in self.categories:
-                output["nEvents"]["selected"][cat].update({mass:{}})
-                output["hists"][cat] = {}
-                for hist in self.histograms:
-                    output["hists"][cat][hist].update({mass:{}})
+            output["metadata"][mass] = {}
+        for cat in self.categories:
+            output["nEvents"]["selected"][cat] = {}
+            output["hists"][cat] = {}
+            for hist in self.histograms:
+                output["hists"][cat][hist] = {}
+                for mass in masses:
+                    output["nEvents"]["selected"][cat][mass] = {}
+                    output["hists"][cat][hist][mass] = {}
+                    
+                    
         return output
 
     def process(self, events):
@@ -66,16 +69,6 @@ class TTPairTotatg(processor.ProcessorABC):
         return self.output
 
     def postprocess(self, accumulator):
-        # hist_plotter = HistogramPlotter()
-        # xsec_hist_plotter = HistogramXSecPlotter()
-        # for cat in self.categories:
-        #     if cat == "total":
-        #         for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-        #             xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"])
-        #             xsec_hist_plotter.plot_histograms(accumulator["hists"]["total"], hist, signal=["Signal_400", "Signal_1000"], normalize=True)
-        #     else:
-        #         # hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400"])
-        #         hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400", "Signal_1000"], normalize=True)
         pass
 
 
