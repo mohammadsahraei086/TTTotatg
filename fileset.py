@@ -54,77 +54,87 @@ fileset_pc = {
 fileset_pc_limit = {
     "Signal_1000_0p5":{
         "files":{
-            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_04/tag_1_delphes_events.root":"Delphes"
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_09/tag_1_delphes_events.root":"Delphes"
             },
         "metadata":{
-            "xsec": 0.0002194,
+            "xsec": 7.244369e-04,
             "mass": 1000.0,
             "fvec3": 0.5,
             "gammaFlag": 1.0,
             "gluonFlag": 1.0,
-            "width_T_total": 5.928676e+01,
+            "width_T_total": 1.380491e+01,
             "width_T_ta": 4.040094059637447,
-            "width_T_tg": 5.386792079516597
+            "width_T_tg": 5.386792079516597,
+            "width_T_wb": 4.3780284207243465,
+            "xsec_TT": 0.03758
         }
     },
     "Signal_1000_0p75":{
         "files":{
-            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_05/tag_1_delphes_events.root":"Delphes"
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_10/tag_1_delphes_events.root":"Delphes"
             },
         "metadata":{
-            "xsec": 0.0008966,
+            "xsec": 8.958559e-04,
             "mass": 1000.0,
             "fvec3": 0.75,
             "gammaFlag": 1.0,
             "gluonFlag": 1.0,
-            "width_T_total": 8.459547e+01,
+            "width_T_total": 3.106106e+01,
             "width_T_ta": 9.090211634184255,
-            "width_T_tg": 12.120282178912342
+            "width_T_tg": 12.120282178912342,
+            "width_T_wb": 9.85056394662978,
+            "xsec_TT": 0.04688
         }
     },
     "Signal_1000_1p0":{
         "files":{
-            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_06/tag_1_delphes_events.root":"Delphes"
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_11/tag_1_delphes_events.root":"Delphes"
             },
         "metadata":{
-            "xsec": 0.002199,
+            "xsec": 1.212031e-03,
             "mass": 1000.0,
             "fvec3": 1.0,
             "gammaFlag": 1.0,
             "gluonFlag": 1.0,
-            "width_T_total": 1.200277e+02,
+            "width_T_total": 5.521966e+01,
             "width_T_ta": 16.160376238549787,
-            "width_T_tg": 21.547168318066387
+            "width_T_tg": 21.547168318066387,
+            "width_T_wb": 17.512113682897386,
+            "xsec_TT": 0.06577
         }
     },
     "Signal_1000_1p25":{
         "files":{
-            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_07/tag_1_delphes_events.root":"Delphes"
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_12/tag_1_delphes_events.root":"Delphes"
             },
         "metadata":{
-            "xsec": 0.004095,
+            "xsec": 1.769599e-03,
             "mass": 1000.0,
             "fvec3": 1.25,
             "gammaFlag": 1.0,
             "gluonFlag": 1.0,
-            "width_T_total": 1.655833e+02,
+            "width_T_total": 8.628072e+01,
             "width_T_ta": 25.250587872734048,
-            "width_T_tg": 33.66745049697873
+            "width_T_tg": 33.66745049697873,
+            "width_T_wb": 27.36267762952716,
+            "xsec_TT": 0.09953
         }
     },
     "Signal_1000_1p5":{
         "files":{
-            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_08/tag_1_delphes_events.root":"Delphes"
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_13/tag_1_delphes_events.root":"Delphes"
             },
         "metadata":{
-            "xsec": 0.006501,
+            "xsec": 2.672608e-03,
             "mass": 1000.0,
             "fvec3": 1.5,
             "gammaFlag": 1.0,
             "gluonFlag": 1.0,
-            "width_T_total": 2.212625e+02,
+            "width_T_total": 1.242442e+02,
             "width_T_ta": 36.36084653673702,
-            "width_T_tg": 48.48112871564937
+            "width_T_tg": 48.48112871564937,
+            "width_T_wb": 39.40225578651912,
+            "xsec_TT": 0.1556
         }
     },
 }
