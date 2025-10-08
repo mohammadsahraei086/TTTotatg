@@ -9,7 +9,7 @@ from object_selector import ObjectSelector
 from event_selector import EventSelector
 from fileset import *
 
-fileset = fileset_pc_limit
+fileset = fileset_pc
 
 class TTPairTotatg(processor.ProcessorABC):
     
@@ -102,7 +102,7 @@ def main():
         processor_instance=TTPairTotatg(),
     )
     print(out)
-    save(out, 'output/output.coffea')
+    save(out, 'output1/output.coffea')
     
     elapsed = time.time() - tstart
     print(elapsed)

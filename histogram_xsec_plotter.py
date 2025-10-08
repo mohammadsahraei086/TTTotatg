@@ -164,12 +164,12 @@ class HistogramXSecPlotter:
 if __name__ == "__main__":
     # hist_plotter = HistogramPlotter()
     xsec_hist_plotter = HistogramXSecPlotter()
-    output = load("output/output.coffea")
+    output = load("output1/output.coffea")
     histograms = {}
     for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
         histograms[hist] = {}
         for mass, hist_dic in output["hists"]["total"][hist].items():
             histograms[hist][f"Signal_{int(mass)}"] = hist_dic[f"Signal_{int(mass)}_1p0"]
     for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_1000"])
-        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_1000"], normalize=True)
+        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_1000", "Signal_500"])
+        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_1000", "Signal_500"], normalize=True)

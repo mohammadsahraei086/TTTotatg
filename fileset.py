@@ -34,20 +34,22 @@ fileset_laptop = {
 }
 
 fileset_pc = {
-    "Signal_500":{
+    "Signal_500_1p0":{
         "files":{
             "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_02/tag_1_delphes_events.root":"Delphes"
             },
         "metadata":{
-            "xsec": 3.959e-05
+            "xsec": 3.959e-05,
+            "mass": 500.0,
         }
     },
-    "Signal_1000":{
+    "Signal_1000_1p0":{
         "files":{
             "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/TTpairTotgta/Events/run_03/tag_1_delphes_events.root":"Delphes"
         },
         "metadata":{
-            "xsec": 6.409e-05
+            "xsec": 6.409e-05,
+            "mass": 1000.0,
         }
     }
 }
