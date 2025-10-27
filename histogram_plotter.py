@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import json
 import hist
+from coffea.util import load
 
 cms_color = {
     "blue": "#3f90da",
@@ -167,7 +168,7 @@ class HistogramPlotter:
                  label='Syst. Unc.', edgecolor='black', linewidth=0)
 
         # Set labels and limits
-        self.rax.set_xlabel('p$_T$ [GeV]')
+        self.rax.set_xlabel('p$_T(\gamma)$ [GeV]')
         self.rax.set_ylabel('Data/MC')
         self.rax.set_ylim(0.5, 1.5)
         self.rax.set_xlim(self.bins[0], self.bins[-1])
@@ -250,9 +251,13 @@ class HistogramPlotter:
             
             
 if __name__ == "__main__":
-    # hist_plotter = HistogramPlotter()
+    hist_plotter = HistogramPlotter()
     output = load("output/output.coffea")
-    for cat in self.categories:
+    histograms = {}
+    for cat in output["hists"].keys():
         if cat != "total":
-            # hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400"])
-            hist_plotter.plot_histograms(accumulator["hists"], channel=cat, signal=["Signal_400", "Signal_1000"], normalize=True)
+            histograms[cat] = {"photon_pt":{}}
+            for mass, hist_dic in output["hists"][cat]["photon_pt"].items():
+                histograms[cat]["photon_pt"][f"Signal_{int(mass)}"] = hist_dic[f"Signal_{int(mass)}_1p0_1p0"]
+            hist_plotter.plot_histograms(histograms, channel=cat, signal=["Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"])
+            hist_plotter.plot_histograms(histograms, channel=cat, signal=["Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"], normalize=True)

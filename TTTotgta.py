@@ -9,7 +9,7 @@ from object_selector import ObjectSelector
 from event_selector import EventSelector
 from fileset import *
 
-fileset = fileset_pc
+fileset = fileset
 
 class TTPairTotatg(processor.ProcessorABC):
     
@@ -49,7 +49,6 @@ class TTPairTotatg(processor.ProcessorABC):
         mass = events.metadata["mass"]
         self.output = self.define_output_layout()
         self.events = events
-        self.output["metadata"][mass][dataset] = events.metadata
         self.output["nEvents"]["primary"][dataset] = len(self.events)
         self.events["n_primary"] = len(self.events)
 
@@ -69,7 +68,8 @@ class TTPairTotatg(processor.ProcessorABC):
         return self.output
 
     def postprocess(self, accumulator):
-        pass
+        for dataset, value in fileset.items():
+            accumulator["metadata"][value["metadata"]["mass"]][dataset] = value["metadata"]
 
 
 #####################################################################################################################
@@ -93,7 +93,8 @@ def main():
     iterative_run = processor.Runner(
         executor = processor.IterativeExecutor(compression=None),
         schema=DelphesSchema,
-        maxchunks=10,
+        chunksize=10000,
+        # maxchunks=None,
     )
     
     out = iterative_run(
@@ -102,7 +103,7 @@ def main():
         processor_instance=TTPairTotatg(),
     )
     print(out)
-    save(out, 'output1/output.coffea')
+    save(out, 'output/output.coffea')
     
     elapsed = time.time() - tstart
     print(elapsed)

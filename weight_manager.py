@@ -12,7 +12,7 @@ class WeightManager:
         return total_weight
     
     def xsec(self, events):
-        return events.metadata["xsec"]
+        return events.metadata["xsec"]*1000
     
     def luminosity(self, events):
         return self.run2_luminosity

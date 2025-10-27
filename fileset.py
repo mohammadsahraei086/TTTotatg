@@ -140,3 +140,605 @@ fileset_pc_limit = {
         }
     },
 }
+####################################################################################################################
+####################################################################################################################
+fileset = {
+    "Signal_500_m1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/500/Events/run_01/tag_2_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 50.71,
+            "mass": 500.0,
+            "fvec3": 1,
+            "gammaFlag": -1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 13.634507,
+            "width_T_tg": 18.179343,
+            "width_T_wb": 19.114733,
+            "xsec_TT": 19.37
+        }
+    },
+    "Signal_500_m0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/500/Events/run_02/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 12.69,
+            "mass": 500.0,
+            "fvec3": 1,
+            "gammaFlag": -0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 3.408626,
+            "width_T_tg": 18.179343,
+            "width_T_wb": 19.114733,
+            "xsec_TT": 19.37
+        }
+    },
+    "Signal_500_0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/500/Events/run_03/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 12.72,
+            "mass": 500.0,
+            "fvec3": 1,
+            "gammaFlag": 0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 3.408626,
+            "width_T_tg": 18.179343,
+            "width_T_wb": 19.114733,
+            "xsec_TT": 19.37
+        }
+    },
+    "Signal_500_1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/500/Events/run_09/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 50.79,
+            "mass": 500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 13.634507,
+            "width_T_tg": 18.179343,
+            "width_T_wb": 19.114733,
+            "xsec_TT": 19.37
+        }
+    },
+    "Signal_500_1p0_m1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/500/Events/run_05/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 50.71,
+            "mass": 500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -1.0,
+            "width_T_ta": 13.634507,
+            "width_T_tg": 18.179343,
+            "width_T_wb": 19.114733,
+            "xsec_TT": 19.32
+        }
+    },
+    "Signal_500_1p0_m0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/500/Events/run_06/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 3.153,
+            "mass": 500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -0.5,
+            "width_T_ta": 13.634507,
+            "width_T_tg": 4.544835,
+            "width_T_wb": 19.114733,
+            "xsec_TT": 4.807
+        }
+    },
+    "Signal_500_1p0_0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/500/Events/run_07/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 3.162,
+            "mass": 500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 0.5,
+            "width_T_ta": 13.634507,
+            "width_T_tg": 4.544835,
+            "width_T_wb": 19.114733,
+            "xsec_TT": 4.8
+        }
+    },
+    #####################################  750   ###########################################
+    "Signal_750_0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/750/Events/run_01/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 57.21,
+            "mass": 750.0,
+            "fvec3": 1,
+            "gammaFlag": 0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 14.274227,
+            "width_T_tg": 76.129215,
+            "width_T_wb": 65.980604,
+            "xsec_TT": 4.939
+        }
+    },
+    "Signal_750_1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/750/Events/run_02/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 228.4,
+            "mass": 750.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 57.096911,
+            "width_T_tg": 76.129215,
+            "width_T_wb": 65.980604,
+            "xsec_TT": 4.939
+        }
+    },
+    "Signal_750_1p0_0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/750/Events/run_03/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 9.709,
+            "mass": 750.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 0.5,
+            "width_T_ta": 57.096911,
+            "width_T_tg": 19.032303,
+            "width_T_wb": 65.980604,
+            "xsec_TT": 0.8451
+        }
+    },
+    #####################################  1000  ###########################################
+    "Signal_1000_m1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1000/Events/run_01/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 468.3,
+            "mass": 1000.0,
+            "fvec3": 1,
+            "gammaFlag": -1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 145.443386,
+            "width_T_tg": 193.924514,
+            "width_T_wb": 157.609023,
+            "xsec_TT": 1.563
+        }
+    },
+    "Signal_1000_m0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1000/Events/run_02/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 116.7,
+            "mass": 1000.0,
+            "fvec3": 1,
+            "gammaFlag": -0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 36.360846,
+            "width_T_tg": 193.924514,
+            "width_T_wb": 157.609023,
+            "xsec_TT": 1.563
+        }
+    },
+    "Signal_1000_0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1000/Events/run_03/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 117.1,
+            "mass": 1000.0,
+            "fvec3": 1,
+            "gammaFlag": 0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 36.360846,
+            "width_T_tg": 193.924514,
+            "width_T_wb": 157.609023,
+            "xsec_TT": 1.563
+        }
+    },
+    "Signal_1000_1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1000/Events/run_04/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 467,
+            "mass": 1000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 145.443386,
+            "width_T_tg": 193.924514,
+            "width_T_wb": 157.609023,
+            "xsec_TT": 1.563
+        }
+    },
+    "Signal_1000_1p0_m1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1000/Events/run_05/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 469.6,
+            "mass": 1000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -1.0,
+            "width_T_ta": 145.443386,
+            "width_T_tg": 193.924514,
+            "width_T_wb": 157.609023,
+            "xsec_TT": 1.563
+        }
+    },
+    "Signal_1000_1p0_m0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1000/Events/run_06/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 16.92,
+            "mass": 1000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -0.5,
+            "width_T_ta": 145.443386,
+            "width_T_tg": 48.481128,
+            "width_T_wb": 157.609023,
+            "xsec_TT": 0.2265
+        }
+    },
+    "Signal_1000_1p0_0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1000/Events/run_07/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 16.91,
+            "mass": 1000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 0.5,
+            "width_T_ta": 145.443386,
+            "width_T_tg": 48.481128,
+            "width_T_wb": 157.609023,
+            "xsec_TT": 0.2266
+        }
+    },
+    #############################################  1250  ###############################################
+    "Signal_1250_0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1250/Events/run_03/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 160.9,
+            "mass": 1250.0,
+            "fvec3": 1,
+            "gammaFlag": 0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 73.381261,
+            "width_T_tg": 391.366727,
+            "width_T_wb": 308.920602,
+            "xsec_TT": 0.5282
+        }
+    },
+    "Signal_1250_1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1250/Events/run_04/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 644.2,
+            "mass": 1250.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 293.525045,
+            "width_T_tg": 391.366727,
+            "width_T_wb": 308.920602,
+            "xsec_TT": 0.5282
+        }
+    },
+    "Signal_1250_1p0_0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1250/Events/run_02/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 21.53,
+            "mass": 1250.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 0.5,
+            "width_T_ta": 293.525045,
+            "width_T_tg": 97.841681,
+            "width_T_wb": 308.920602,
+            "xsec_TT": 0.0706
+        }
+    },
+    #############################################  1500  ###############################################
+    "Signal_1500_m1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1500/Events/run_01/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 682.1,
+            "mass": 1500.0,
+            "fvec3": 1,
+            "gammaFlag": -1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 516.237321,
+            "width_T_tg": 688.316428,
+            "width_T_wb": 534.836081,
+            "xsec_TT": 0.181
+        }
+    },
+    "Signal_1500_m0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1500/Events/run_02/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 170.5,
+            "mass": 1500.0,
+            "fvec3": 1,
+            "gammaFlag": -0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 129.059330,
+            "width_T_tg": 688.316428,
+            "width_T_wb": 534.836081,
+            "xsec_TT": 0.181
+        }
+    },
+    "Signal_1500_0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1500/Events/run_03/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 170.7,
+            "mass": 1500.0,
+            "fvec3": 1,
+            "gammaFlag": 0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 129.059330,
+            "width_T_tg": 688.316428,
+            "width_T_wb": 534.836081,
+            "xsec_TT": 0.181
+        }
+    },
+    "Signal_1500_1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1500/Events/run_04/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 682.5,
+            "mass": 1500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 516.237321,
+            "width_T_tg": 688.316428,
+            "width_T_wb": 534.836081,
+            "xsec_TT": 0.181
+        }
+    },
+    "Signal_1500_1p0_m1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1500/Events/run_05/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 684.3,
+            "mass": 1500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -1.0,
+            "width_T_ta": 516.237321,
+            "width_T_tg": 688.316428,
+            "width_T_wb": 534.836081,
+            "xsec_TT": 0.1806
+        }
+    },
+    "Signal_1500_1p0_m0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1500/Events/run_06/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 684.3,
+            "mass": 1500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -0.5,
+            "width_T_ta": 516.237321,
+            "width_T_tg": 172.079107,
+            "width_T_wb": 534.836081,
+            "xsec_TT": 0.02301
+        }
+    },
+    "Signal_1500_1p0_0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1500/Events/run_07/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 21.69,
+            "mass": 1500.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 0.5,
+            "width_T_ta": 516.237321,
+            "width_T_tg": 172.079107,
+            "width_T_wb": 534.836081,
+            "xsec_TT": 0.02302
+        }
+    },
+    #################################################  1750  ###############################################
+    "Signal_1750_0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1750/Events/run_01/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 148.8,
+            "mass": 1750.0,
+            "fvec3": 1,
+            "gammaFlag": 0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 207.122433,
+            "width_T_tg": 1104.652980,
+            "width_T_wb": 850.276224,
+            "xsec_TT": 0.06131
+        }
+    },
+    "Signal_1750_1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1750/Events/run_02/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 595.2,
+            "mass": 1750.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 828.489735,
+            "width_T_tg": 1104.652980,
+            "width_T_wb": 850.276224,
+            "xsec_TT": 0.06131
+        }
+    },
+    "Signal_1750_1p0_0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/1750/Events/run_03/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 18.3,
+            "mass": 1750.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 0.5,
+            "width_T_ta": 828.489735,
+            "width_T_tg": 276.163245,
+            "width_T_wb": 850.276224,
+            "xsec_TT": 0.007525
+        }
+    },
+    #################################################  2000  ###############################################
+    "Signal_2000_m1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/2000/Events/run_01/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 442.8,
+            "mass": 2000.0,
+            "fvec3": 1,
+            "gammaFlag": -1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 1245.197332,
+            "width_T_tg": 1660.263109,
+            "width_T_wb": 1270.161805,
+            "xsec_TT": 0.0202
+        }
+    },
+    "Signal_2000_m0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/2000/Events/run_02/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 110.8,
+            "mass": 2000.0,
+            "fvec3": 1,
+            "gammaFlag": -0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 311.299333,
+            "width_T_tg": 1660.263109,
+            "width_T_wb": 1270.161805,
+            "xsec_TT": 0.0202
+        }
+    },
+    "Signal_2000_0p5_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/2000/Events/run_03/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 110.7,
+            "mass": 2000.0,
+            "fvec3": 1,
+            "gammaFlag": 0.5,
+            "gluonFlag": 1.0,
+            "width_T_ta": 311.299333,
+            "width_T_tg": 1660.263109,
+            "width_T_wb": 1270.161805,
+            "xsec_TT": 0.0202
+        }
+    },
+    "Signal_2000_1p0_1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/2000/Events/run_04/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 442.4,
+            "mass": 2000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 1.0,
+            "width_T_ta": 1245.197332,
+            "width_T_tg": 1660.263109,
+            "width_T_wb": 1270.161805,
+            "xsec_TT": 0.0202
+        }
+    },
+    "Signal_2000_1p0_m1p0":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/2000/Events/run_05/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 442.4,
+            "mass": 2000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -1.0,
+            "width_T_ta": 1245.197332,
+            "width_T_tg": 1660.263109,
+            "width_T_wb": 1270.161805,
+            "xsec_TT": 0.02013
+        }
+    },
+    "Signal_2000_1p0_m0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/2000/Events/run_06/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 13.24,
+            "mass": 2000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": -0.5,
+            "width_T_ta": 1245.197332,
+            "width_T_tg": 415.065777,
+            "width_T_wb": 1270.161805,
+            "xsec_TT": 0.002412
+        }
+    },
+    "Signal_2000_1p0_0p5":{
+        "files":{
+            "/home/mohammad/Softwares/MG5_aMC_v3.6.3/MG5_aMC_v3_6_3/TTpairTotgta/2000/Events/run_07/tag_1_delphes_events.root":"Delphes"
+            },
+        "metadata":{
+            "xsec": 13.19,
+            "mass": 2000.0,
+            "fvec3": 1,
+            "gammaFlag": 1.0,
+            "gluonFlag": 0.5,
+            "width_T_ta": 1245.197332,
+            "width_T_tg": 415.065777,
+            "width_T_wb": 1270.161805,
+            "xsec_TT": 0.002416
+        }
+    },
+}
