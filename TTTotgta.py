@@ -1,4 +1,5 @@
 import time
+import copy
 
 from coffea import processor
 from coffea.util import save
@@ -62,8 +63,10 @@ class TTPairTotatg(processor.ProcessorABC):
             selected_events = event_selector.select_good_events(cat)
             self.output["nEvents"]["selected"][cat][mass][dataset] = len(selected_events)
             for name, hist in self.histograms.items():
+                # hist_copy = copy.deepcopy(hist)
                 hist.fill(selected_events)
-                self.output["hists"][cat][name][mass][dataset] = hist.get_histogram()
+                self.output["hists"][cat][name][mass][dataset] = copy.deepcopy(hist.get_histogram())
+                hist.reset_histogram()
         
         return self.output
 

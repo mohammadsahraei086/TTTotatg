@@ -4,6 +4,8 @@ import awkward as ak
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
+from axis_selection import *
+
 from weight_manager import WeightManager
 
 @dataclass
@@ -15,6 +17,7 @@ class Axis:
     stop: float = None
     type: str = "regular"
     function: Optional[Callable] = None
+    growth = True
     
     def __post_init__(self):
         if self.function is not None:
@@ -24,7 +27,7 @@ class Axis:
         raise NotImplementedError(f"Provide a function parameter when creating Axis {self.name}")
 
 class Histogram:
-    def __init__(self,name, axes:List[Axis], weights:List[str]):
+    def __init__(self,name, axes:List[Axis], weights=None):
         self.name = name
         self.axes = axes
         hist_axis = []
@@ -71,19 +74,26 @@ class Histogram:
             )
         elif ax.type == "strcat":
             return hist.axis.StrCategory(
-                ax.bins, name=ax.name, label=ax.label
+                ax.bins, name=ax.name, label=ax.label, growth=ax.growth
             )
 
     def fill(self, events):
         ax = {}
         for axis in self.axes:
             ax[axis.name] = axis.get_variable(events)
-        weight_manager = WeightManager()
-        weight = weight_manager.get_weights(events, *self.weights)
-        self.histogram.fill(**ax, weight=weight)
+            print(axis.name, len(ax[axis.name]))
+        if self.weights is not None:
+            weight_manager = WeightManager()
+            weight = weight_manager.get_weights(events, *self.weights)
+            self.histogram.fill(**ax, weight=weight)
+        else:
+            self.histogram.fill(**ax)
 
     def get_histogram(self):
         return self.histogram
+    
+    def reset_histogram(self):
+        self.histogram.reset()
 
 class HistManager:
     def __init__(self):
@@ -95,32 +105,32 @@ class HistManager:
                       "$p_T(\gamma) (GeV)$",
                       [ 20.,  35.,  50.,  70., 100., 130., 165., 200., 250., 300.],
                       type = "variable",
-                      function = lambda events: ak.flatten(events.GoodPhotons.pt)
-                     )
+                      function = lambda events: ak.flatten(events.GoodPhotons.pt))
         self.add_axis("xsec_photon_pt",
                       "$p_T(\gamma) (GeV)$",
                       [ 20.,  35.,  50.,  70., 130., 200., 300.],
                       type = "variable",
-                      function = lambda events: ak.flatten(events.GoodPhotons.pt)
-                     )
+                      function = lambda events: ak.flatten(events.GoodPhotons.pt))
         self.add_axis("deltaeta_ll",
                       "$|\Delta\eta(\ell\ell)|$",
                       [0, 0.5, 1, 1.5, 2, 2.5, 3, 4.5],
                       type = "variable",
-                      function = lambda events: abs(events.GoodLeptons[:, 0].eta-events.GoodLeptons[:, 1].eta)
-                     )
+                      function = lambda events: abs(events.GoodLeptons[:, 0].eta-events.GoodLeptons[:, 1].eta))
         self.add_axis("deltaphi_ll",
                       "$\Delta \phi(\ell\ell)$",
                       [0, 0.4, 0.8, 1.2, 1.6, 2, 2.4, 2.8, 3.2],
                       type = "variable",
-                      function = lambda events: abs(events.GoodLeptons[:, 0].phi-events.GoodLeptons[:, 1].phi)
-                     )
+                      function = lambda events: abs(events.GoodLeptons[:, 0].phi-events.GoodLeptons[:, 1].phi))
         self.add_axis("ptl1plusptl2",
                       "$p_{T}(\ell_{1})+p_{T}(\ell_{2})$",
                       [40, 70, 100, 140, 190, 250, 330, 500],
                       type = "variable",
-                      function = lambda events: events.GoodLeptons[:, 0].pt+events.GoodLeptons[:, 1].pt
-                     )
+                      function = lambda events: events.GoodLeptons[:, 0].pt+events.GoodLeptons[:, 1].pt)
+        self.add_axis("jet_multiplicity",
+                      "",
+                      ["1,1b", "2,1b", ">=3,1b", "2,2b", ">=3,2b", ">=3,>=3b"],
+                      type = "strcat",
+                      function = get_jet_multiplicity)
         
     def define_histograms(self):
         self.add_histogram("photon_pt",
@@ -143,6 +153,10 @@ class HistManager:
                            [self.axes["ptl1plusptl2"]],
                            ["xsec", "luminosity", "sum_genweight"]
                           )
+        self.add_histogram("jets_multiplicity",
+                           [self.axes["jet_multiplicity"]],
+                           # ["xsec", "luminosity", "sum_genweight"]
+                          )
         
     def add_axis(self,
                  name,
@@ -158,7 +172,7 @@ class HistManager:
     def add_histogram(self,
                       name,
                       axes:List[str],
-                      weights:[]
+                      weights= None
                      ):
         self.histograms[name] = Histogram(name, axes, weights)
         
