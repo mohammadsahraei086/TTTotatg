@@ -22,36 +22,23 @@ class TTPairTotatg(processor.ProcessorABC):
         self.categories = ["total", "emu", "ee", "mumu"]
     
     def define_output_layout(self):
-        masses = set([])
-        for item, dic in fileset.items():
-            masses.add(dic["metadata"]["mass"])
         output = {}
         output["metadata"] = {}
-        output["nEvents"] = {}
-        output["nEvents"]["primary"] = {}
-        output["nEvents"]["selected"] = {}
+        output["cutflow"] = {}
         output["hists"] = {}
-        for mass in masses:
-            output["metadata"][mass] = {}
+        
         for cat in self.categories:
-            output["nEvents"]["selected"][cat] = {}
+            output["cutflow"][cat] = {}
             output["hists"][cat] = {}
             for hist in self.histograms:
                 output["hists"][cat][hist] = {}
-                for mass in masses:
-                    output["nEvents"]["selected"][cat][mass] = {}
-                    output["hists"][cat][hist][mass] = {}
-                    
-                    
+                
         return output
 
     def process(self, events):
         dataset = events.metadata["dataset"]
-        mass = events.metadata["mass"]
         self.output = self.define_output_layout()
         self.events = events
-        self.output["nEvents"]["primary"][dataset] = len(self.events)
-        self.events["n_primary"] = len(self.events)
 
         object_selector = ObjectSelector(self.events)
         object_selector.select_good_objects()
@@ -60,19 +47,19 @@ class TTPairTotatg(processor.ProcessorABC):
         event_selector = EventSelector(self.events)
 
         for cat in self.categories:
-            selected_events = event_selector.select_good_events(cat)
-            self.output["nEvents"]["selected"][cat][mass][dataset] = len(selected_events)
+            selected_events, cutflow = event_selector.select_good_events(cat)
+            self.output["cutflow"][cat][dataset] = cutflow
             for name, hist in self.histograms.items():
                 # hist_copy = copy.deepcopy(hist)
                 hist.fill(selected_events)
-                self.output["hists"][cat][name][mass][dataset] = copy.deepcopy(hist.get_histogram())
+                self.output["hists"][cat][name][dataset] = copy.deepcopy(hist.get_histogram())
                 hist.reset_histogram()
         
         return self.output
 
     def postprocess(self, accumulator):
         for dataset, value in fileset.items():
-            accumulator["metadata"][value["metadata"]["mass"]][dataset] = value["metadata"]
+            accumulator["metadata"][dataset] = value["metadata"]
 
 
 #####################################################################################################################
@@ -82,29 +69,31 @@ def main():
     tstart = time.time()
     
 #     futures_run = processor.Runner(
-#         executor = processor.FuturesExecutor(compression=None, workers=2),
+#         executor = processor.FuturesExecutor(compression=None, workers=4),
 #         schema=DelphesSchema,
 #         maxchunks=10,
+#         chunksize=10000
 #     )
 
 #     out = futures_run(
 #         fileset,
 #         "Delphes",
-#         processor_instance=TTPairTotatg()
+#         processor_instance=TTPairTotatg() 
 #     )
     
     iterative_run = processor.Runner(
-        executor = processor.IterativeExecutor(compression=None),
-        schema=DelphesSchema,
-        chunksize=10000,
-        # maxchunks=None,
+       executor = processor.IterativeExecutor(compression=None),
+       schema=DelphesSchema,
+       chunksize=10000,
+        maxchunks=None,
     )
     
     out = iterative_run(
-        fileset,
-        treename="Delphes",
-        processor_instance=TTPairTotatg(),
+       fileset,
+       treename="Delphes",
+       processor_instance=TTPairTotatg(),
     )
+
     print(out)
     save(out, 'output/output.coffea')
     

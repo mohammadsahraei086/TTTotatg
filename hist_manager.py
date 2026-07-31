@@ -81,7 +81,6 @@ class Histogram:
         ax = {}
         for axis in self.axes:
             ax[axis.name] = axis.get_variable(events)
-            print(axis.name, len(ax[axis.name]))
         if self.weights is not None:
             weight_manager = WeightManager()
             weight = weight_manager.get_weights(events, *self.weights)

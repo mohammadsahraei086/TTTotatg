@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import json
+import copy
 
 from coffea.util import load
 
@@ -27,25 +28,28 @@ class HistogramXSecPlotter:
         self.errors["stat"] = self.errors["stat"]/self.bin_widths
         self.errors["theory unc."] = self.errors["theory unc."]/self.bin_widths
         self.data_values = np.array(self.histograms["Observed"].values())/self.bin_widths
+        
         self.mc_values = {}
         for sample in self.histograms.keys():
             if sample in ["MG5+PYTHIA8", "MG5+HERWIG7"]:
                 self.mc_values[sample] = np.array(self.histograms[sample].values())/self.bin_widths
+                
         self.signal_components = {}
         for signal in self.histograms.keys():
-            if "Signal" in signal:
+            if (not "MG5" in signal) and (signal != "errors"):
                 # epsilon = self.histograms[signal].values()/10000
                 self.signal_components[signal] = np.array(self.histograms[signal].values())/(138*self.bin_widths)
         self.x_axis_name = self.histograms["Observed"].axes[0].label
+        
         if normalize:
-            self.errors["stat"] = self.errors["stat"]/(np.sum(self.data_values)*self.bin_widths)
-            self.errors["theory unc."] = self.errors["theory unc."]/(np.sum(self.mc_values["MG5+PYTHIA8"])*self.bin_widths)
-            self.data_values = self.data_values/(np.sum(self.data_values)*self.bin_widths)
+            self.errors["stat"] = self.errors["stat"]/(np.sum(self.data_values*self.bin_widths))
+            self.errors["theory unc."] = self.errors["theory unc."]/(np.sum(self.mc_values["MG5+PYTHIA8"]*self.bin_widths))
+            self.data_values = self.data_values/(np.sum(self.data_values*self.bin_widths))
             for sample in self.mc_values.keys():
-                self.mc_values[sample] = self.mc_values[sample]/(np.sum(self.mc_values[sample])*self.bin_widths)
+                self.mc_values[sample] = self.mc_values[sample]/(np.sum(self.mc_values[sample]*self.bin_widths))
             for signal in self.histograms.keys():
-                if "Signal" in signal:
-                    self.signal_components[signal] = self.signal_components[signal]/(np.sum(self.signal_components[signal])*self.bin_widths)
+                if not "MG5" in signal and signal != "errors":
+                    self.signal_components[signal] = self.signal_components[signal]/(np.sum(self.signal_components[signal]*self.bin_widths))
                 
         self.colors = [cms_color["orange"], cms_color["purple"], cms_color["red"], cms_color["beige"], cms_color["blue"], cms_color["dark_gray"],]
                 
@@ -76,7 +80,7 @@ class HistogramXSecPlotter:
             values = self.signal_components[signal]
             self.ax.step(
                 self.bins, np.append(values, values[-1]), where='post',
-                alpha=1, linestyle="dashed", label=signal, color=self.colors[i], linewidth=2
+                alpha=1, linestyle="-", label=signal, color=self.colors[i], linewidth=2
             )
         
         lower = self.mc_values["MG5+PYTHIA8"] - self.errors["theory unc."]
@@ -93,14 +97,41 @@ class HistogramXSecPlotter:
         # self.ax.text(0.75, 0.45, cats[channel], transform=self.ax.transAxes, 
         #        fontsize=20, fontweight='bold', va='top')
         
-        self.ax.set_ylabel('$d\sigma/dp_T(\gamma)[fb/GeV]$', fontsize=15)
-        self.ax.minorticks_on()
-        self.ax.legend(fontsize=10)
-        self.ax.grid(True, alpha=0.3)
-        if normalize:
-            self.ax.set_title(f'Normalized differential cross section/{self.x_axis_name}', fontsize=16)
+        if hist_name == "diff_xsec_photon_pt":
+            self.ax.set_ylabel('1/$\sigma$ d$\sigma$/d$p_T$($\gamma$) [1/GeV]', fontsize=20)
         else:
-            self.ax.set_title(f'Differential cross section/{self.x_axis_name}', fontsize=16)
+            self.ax.set_ylabel(f'1/$\sigma$ d$\sigma$/d{self.x_axis_name}', fontsize=20)
+        self.ax.minorticks_on()
+        self.ax.legend(fontsize=14)
+        self.ax.grid(True, alpha=0.3)
+        
+        self.ax.tick_params(axis='both', which='major', labelsize=14, width=2, length=8)
+        self.ax.tick_params(axis='both', which='minor', width=1.5, length=4)
+        
+        for spine in self.ax.spines.values():
+            spine.set_linewidth(2) 
+        # if normalize:
+        #     self.ax.set_title(f'Normalized differential cross section/{self.x_axis_name}', fontsize=16)
+        # else:
+        #     self.ax.set_title(f'Differential cross section/{self.x_axis_name}', fontsize=16)
+        
+#         current_ymax = self.ax.get_ylim()[1]  # Get current upper limit
+#         self.ax.set_ylim(bottom=0, top=current_ymax) 
+        
+#         yticks = self.ax.get_yticks()
+#         yticklabels = [str(label) for label in yticks]
+#         print(yticks, "#", yticklabels)
+#         yticklabels[0] = ""
+#         self.ax.set_yticklabels(yticklabels)
+        
+        
+        self.ax.text(0.98, 1.02, '138 $fb^{-1}$ [13 TeV]', 
+                transform=self.ax.transAxes,  # Use axes coordinates (0 to 1)
+                fontsize=18, 
+                # fontweight='bold',
+                ha='right',  # horizontal alignment right
+                va='bottom',  # vertical alignment bottom
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='none'))  # optional background
         
     def plot_ratio(self):
         mc_ratio_pythia = self.mc_values["MG5+PYTHIA8"] / self.data_values
@@ -132,13 +163,19 @@ class HistogramXSecPlotter:
                  label='Syst. Unc.', edgecolor='k', linewidth=0)
 
         # Set labels and limits
-        self.rax.set_xlabel(self.x_axis_name, fontsize=15)
-        self.rax.set_ylabel('Pred./Obs.')
-        self.rax.set_ylim(0.5, 1.5)
+        self.rax.set_xlabel(self.x_axis_name, fontsize=20)
+        self.rax.set_ylabel('Pred./Obs.', fontsize=20)
+        self.rax.set_ylim(0.5, 1.4)
         self.rax.set_xlim(self.bins[0], self.bins[-1])
         self.rax.minorticks_on()
         self.rax.grid(True, alpha=0.3)
         self.rax.set_xlim(self.ax.get_xlim())
+        
+        self.rax.tick_params(axis='both', which='major', labelsize=14, width=2, length=8)
+        self.rax.tick_params(axis='both', which='minor', width=1.5, length=4)
+        
+        for spine in self.rax.spines.values():
+            spine.set_linewidth(2) 
 
         # Add bin edges as x-ticks
         # ax_bottom.set_xticks(bins)
@@ -147,8 +184,6 @@ class HistogramXSecPlotter:
     def plot_histograms(self, hist_info, hist_name, signal=[], normalize=False):
         self.hist_info = hist_info
         name = hist_name
-        if len(signal):
-            name = name + "_Signal"
         if normalize:
             name = name + "_normalized"
             
@@ -164,12 +199,12 @@ class HistogramXSecPlotter:
 if __name__ == "__main__":
     # hist_plotter = HistogramPlotter()
     xsec_hist_plotter = HistogramXSecPlotter()
-    output = load("output/output.coffea")
+    output = load("../output.coffea")
     histograms = {}
-    for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-        histograms[hist] = {}
-        for mass, hist_dic in output["hists"]["total"][hist].items():
-            histograms[hist][f"Signal_{int(mass)}"] = hist_dic[f"Signal_{int(mass)}_1p0_1p0"]
-    for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"])
-        xsec_hist_plotter.plot_histograms(histograms, hist, signal=["Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"], normalize=True)
+    # for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
+    #     histograms[hist] = {}
+    #     for dataset, hist in output["hists"]["total"][hist].items():
+    #         histograms[hist][dataset] = hist
+    for hist in ['diff_xsec_photon_pt', "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
+        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"]) # "Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"
+        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"], normalize=True) # 
