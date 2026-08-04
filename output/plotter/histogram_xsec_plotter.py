@@ -9,8 +9,8 @@ from coffea.util import load
 from histogram_plotter import create_CMS_histograms, cms_color
 
 class HistogramXSecPlotter:
-    def __init__(self):
-        pass
+    def __init__(self, output):
+        self.output = output
         
     def extract_hist_data(self, hist_name, normalize):
         
@@ -36,9 +36,12 @@ class HistogramXSecPlotter:
                 
         self.signal_components = {}
         for signal in self.histograms.keys():
-            if (not "MG5" in signal) and (signal != "errors"):
-                # epsilon = self.histograms[signal].values()/10000
-                self.signal_components[signal] = np.array(self.histograms[signal].values())/(138*self.bin_widths)
+            if (not "MG5" in signal) and (signal != "errors") and (signal != "Observed"):
+                epsilon = np.array(self.histograms[signal].values())/self.output["cutflow"]["total"][signal]["primary"]
+                print(epsilon)
+                self.signal_components[signal] = np.array(self.histograms[signal].values())/(138*(self.bin_widths))
+                # print(signal, np.sum(np.array(self.histograms[signal].values())/(138)))
+                print(signal,np.array(self.histograms[signal].values())/(138*self.bin_widths))
         self.x_axis_name = self.histograms["Observed"].axes[0].label
         
         if normalize:
@@ -48,7 +51,7 @@ class HistogramXSecPlotter:
             for sample in self.mc_values.keys():
                 self.mc_values[sample] = self.mc_values[sample]/(np.sum(self.mc_values[sample]*self.bin_widths))
             for signal in self.histograms.keys():
-                if not "MG5" in signal and signal != "errors":
+                if not "MG5" in signal and signal != "errors" and (signal != "Observed"):
                     self.signal_components[signal] = self.signal_components[signal]/(np.sum(self.signal_components[signal]*self.bin_widths))
                 
         self.colors = [cms_color["orange"], cms_color["purple"], cms_color["red"], cms_color["beige"], cms_color["blue"], cms_color["dark_gray"],]
@@ -76,6 +79,9 @@ class HistogramXSecPlotter:
             linewidth=2, label='Data'
         )
         
+        print(self.signal_components[signals[0]])
+        print(np.append(self.signal_components[signals[0]], self.signal_components[signals[0]][-1]))
+        print("normalize", normalize)
         for i, signal in enumerate(signals):
             values = self.signal_components[signal]
             self.ax.step(
@@ -198,8 +204,8 @@ class HistogramXSecPlotter:
         
 if __name__ == "__main__":
     # hist_plotter = HistogramPlotter()
-    xsec_hist_plotter = HistogramXSecPlotter()
     output = load("../output.coffea")
+    xsec_hist_plotter = HistogramXSecPlotter(output)
     histograms = {}
     # for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
     #     histograms[hist] = {}

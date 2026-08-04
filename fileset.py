@@ -1,12 +1,11 @@
 fileset_test = {
-    "Signal_3000": {
+    "SMttgamma": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/3000/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/SMttgamma/Events/run_02/tag_1_delphes_events.root"
         },
         "metadata":{
-            "xsec": 2.982e-09,
-            "nevents": 100000,
-            "mass": 3000
+            "xsec": 1.713,
+            "nevents": 100000
         }
     },
 }
@@ -133,10 +132,10 @@ fileset = {
     },
     "SMttgamma": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/SMttgamma/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/SMttgamma/Events/run_02/tag_1_delphes_events.root"
         },
         "metadata":{
-            "xsec": 0.1396,
+            "xsec": 1.713,
             "nevents": 100000
         }
     },
