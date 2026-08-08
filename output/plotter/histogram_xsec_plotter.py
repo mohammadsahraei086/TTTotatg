@@ -79,14 +79,11 @@ class HistogramXSecPlotter:
             linewidth=2, label='Data'
         )
         
-        print(self.signal_components[signals[0]])
-        print(np.append(self.signal_components[signals[0]], self.signal_components[signals[0]][-1]))
-        print("normalize", normalize)
         for i, signal in enumerate(signals):
             values = self.signal_components[signal]
             self.ax.step(
                 self.bins, np.append(values, values[-1]), where='post',
-                alpha=1, linestyle="-", label=signal, color=self.colors[i], linewidth=2
+                alpha=1, linestyle="-", label="tt$\gamma$", color=self.colors[i], linewidth=2
             )
         
         lower = self.mc_values["MG5+PYTHIA8"] - self.errors["theory unc."]
@@ -104,7 +101,10 @@ class HistogramXSecPlotter:
         #        fontsize=20, fontweight='bold', va='top')
         
         if hist_name == "diff_xsec_photon_pt":
-            self.ax.set_ylabel('1/$\sigma$ d$\sigma$/d$p_T$($\gamma$) [1/GeV]', fontsize=20)
+            if normalize == True:
+                self.ax.set_ylabel('1/$\sigma$ d$\sigma$/d$p_T$($\gamma$) [1/GeV]', fontsize=20)
+            else:
+                self.ax.set_ylabel('d$\sigma$/d$p_T$($\gamma$) [fb/GeV]', fontsize=20)
         else:
             self.ax.set_ylabel(f'1/$\sigma$ d$\sigma$/d{self.x_axis_name}', fontsize=20)
         self.ax.minorticks_on()
@@ -132,6 +132,13 @@ class HistogramXSecPlotter:
         
         
         self.ax.text(0.98, 1.02, '138 $fb^{-1}$ [13 TeV]', 
+                transform=self.ax.transAxes,  # Use axes coordinates (0 to 1)
+                fontsize=18, 
+                # fontweight='bold',
+                ha='right',  # horizontal alignment right
+                va='bottom',  # vertical alignment bottom
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='none'))  # optional background
+        self.ax.text(0.4, 1.02, 'MG5+PYTHIA+DELPHES', 
                 transform=self.ax.transAxes,  # Use axes coordinates (0 to 1)
                 fontsize=18, 
                 # fontweight='bold',
@@ -202,15 +209,37 @@ class HistogramXSecPlotter:
         plt.close()
         
         
+# if __name__ == "__main__":
+#     # hist_plotter = HistogramPlotter()
+#     output = load("../output.coffea")
+#     xsec_hist_plotter = HistogramXSecPlotter(output)
+#     histograms = {}
+#     # for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
+#     #     histograms[hist] = {}
+#     #     for dataset, hist in output["hists"]["total"][hist].items():
+#     #         histograms[hist][dataset] = hist
+#     for hist in ['diff_xsec_photon_pt', "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
+#         xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"]) # "Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"
+#         xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"], normalize=True) # 
+
+
+#############################
+###### ttg plotter
+#############################
 if __name__ == "__main__":
     # hist_plotter = HistogramPlotter()
     output = load("../output.coffea")
     xsec_hist_plotter = HistogramXSecPlotter(output)
     histograms = {}
-    # for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-    #     histograms[hist] = {}
-    #     for dataset, hist in output["hists"]["total"][hist].items():
-    #         histograms[hist][dataset] = hist
-    for hist in ['diff_xsec_photon_pt', "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"]) # "Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"
-        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"], normalize=True) # 
+    histograms['diff_xsec_photon_pt'] = {}
+    histograms['diff_xsec_photon_pt']["SMttgamma"] = None
+    for dts in output["hists"]["total"]['diff_xsec_photon_pt']:
+        # if "SL" in dts:
+        #     continue
+        if histograms['diff_xsec_photon_pt']["SMttgamma"] is None:
+            histograms['diff_xsec_photon_pt']["SMttgamma"] = copy.deepcopy(output["hists"]["total"]['diff_xsec_photon_pt'][dts])
+        else:
+            histograms['diff_xsec_photon_pt']["SMttgamma"] += copy.deepcopy(output["hists"]["total"]['diff_xsec_photon_pt'][dts])
+        print()
+    xsec_hist_plotter.plot_histograms(histograms, 'diff_xsec_photon_pt', signal=["SMttgamma"]) # "Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"
+    xsec_hist_plotter.plot_histograms(histograms, 'diff_xsec_photon_pt', signal=["SMttgamma"], normalize=True) # 

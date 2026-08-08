@@ -49,6 +49,8 @@ class TTPairTotatg(processor.ProcessorABC):
         for cat in self.categories:
             selected_events, cutflow = event_selector.select_good_events(cat)
             self.output["cutflow"][cat][dataset] = cutflow
+            if  len(selected_events) == 0:
+                continue
             for name, hist in self.histograms.items():
                 # hist_copy = copy.deepcopy(hist)
                 hist.fill(selected_events)

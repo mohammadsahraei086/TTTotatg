@@ -6,9 +6,36 @@ class ObjectSelector:
         self.events = events
         self.particles = self.events.Particle
         self.particle_stable = self.particles[self.particles.Status == 1]
-        self.particle_electrons = self.particles[(abs(self.particles.PID) == 11) & (self.particles.Status == 1)]
-        self.particle_muons = self.particles[(abs(self.particles.PID) == 13) & (self.particles.Status == 1)]
-        self.particle_photons = self.particles[(self.particles.PID == 22) & (self.particles.Status == 1)]       
+        is_prompt = self.compute_is_prompt(self.particles)
+
+        self.particle_electrons = self.particles[
+            (abs(self.particles.PID) == 11) & (self.particles.Status == 1) & is_prompt
+        ]
+        self.particle_muons = self.particles[
+            (abs(self.particles.PID) == 13) & (self.particles.Status == 1) & is_prompt
+        ]
+        self.particle_photons = self.particles[
+            (self.particles.PID == 22) & (self.particles.Status == 1) # & is_prompt
+        ]
+        
+    def compute_is_prompt(self, particles, max_depth=10):
+        pdgId = particles.PID
+        current_idx = particles.M1
+        hit_hadron = ak.zeros_like(pdgId, dtype=bool)
+    
+        for _ in range(max_depth):
+            valid = current_idx >= 0
+            safe_idx = ak.where(valid, current_idx, 0)
+            anc_pdg    = particles.PID[safe_idx]
+            anc_mother = particles.M1[safe_idx]
+    
+            is_beam = (abs(anc_pdg) == 2212) | (abs(anc_pdg) == 2112)   # exclude beam (anti)protons/neutrons
+            anc_is_hadron = valid & (abs(anc_pdg) >= 100) & (~is_beam)
+            hit_hadron = hit_hadron | anc_is_hadron
+    
+            current_idx = ak.where(valid, anc_mother, -1)
+    
+        return ~hit_hadron
         
     def selected_electrons(self):
         
@@ -41,10 +68,14 @@ class ObjectSelector:
     def selected_photons(self, leptons):
         
         selected_photons = self.particle_photons[(self.particle_photons.pt > 20) & (abs(self.particle_photons.eta) < 1.44)]
-        stable_particles = self.particle_stable[self.particle_stable.pt > 5]
+        is_neutrino = (abs(self.particle_stable.PID) == 12) | (abs(self.particle_stable.PID) == 14) | (abs(self.particle_stable.PID) == 16)
+        stable_particles_no_neutrinos = self.particle_stable[
+            (self.particle_stable.pt > 5) & 
+            (~is_neutrino)
+        ]
         dr_mask = ak.all(
-            (selected_photons.metric_table(stable_particles) > 0.1) |
-            (selected_photons.metric_table(stable_particles) == 0),
+            (selected_photons.metric_table(stable_particles_no_neutrinos) > 0.1) |
+            (selected_photons.metric_table(stable_particles_no_neutrinos) == 0),
             axis=2
         )
         selected_photons = selected_photons[dr_mask]
@@ -64,8 +95,8 @@ class ObjectSelector:
         
         gen_b = self.particles[(self.particles.Status == 23) & (abs(self.particles.PID) == 5)]
         selected_b_jets = jets[ak.any(jets.metric_table(gen_b) < 0.4, axis=2)]
-        b_argmin = ak.argmin(selected_b_jets.metric_table(gen_b), axis=2)
-        selected_b_jets = selected_b_jets[((selected_b_jets.pt-gen_b[b_argmin].pt)/selected_b_jets.pt) < 1]
+        # b_argmin = ak.argmin(selected_b_jets.metric_table(gen_b), axis=2)
+        # selected_b_jets = selected_b_jets[((selected_b_jets.pt-gen_b[b_argmin].pt)/selected_b_jets.pt) < 1]
         
         return selected_b_jets
     
