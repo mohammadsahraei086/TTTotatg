@@ -246,7 +246,7 @@ class HistogramXSecPlotter:
 #############################
 if __name__ == "__main__":
     # hist_plotter = HistogramPlotter()
-    output = load("../output.coffea")
+    output = load("../SMttgamma.coffea")
     xsec_hist_plotter = HistogramXSecPlotter(output)
     histograms = {}
     histograms['diff_xsec_photon_pt'] = {}
