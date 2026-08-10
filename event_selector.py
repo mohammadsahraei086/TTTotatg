@@ -28,16 +28,21 @@ class EventSelector:
     def select_good_events(self, channel="total"):
         selection = PackedSelection()
         cutflow = {}
+        cutflow["nevents"] = {}
+        cutflow["yield"] = {}
         weight = (self.events.metadata["xsec"]*1000 * 138)/self.events.metadata["nevents"]
-        cutflow["primary"] = len(self.events)*weight
+        cutflow["yield"]["primary"] = len(self.events)*weight
+        cutflow["nevents"]["primary"] = len(self.events)
 
         if not "SM" in self.events.metadata["dataset"]:
             self.define_variables_before_selection(self.events)
             lambda_eff = 7071 # 1/sqrt(c_tg^2+c_tgamma^2)
-            cutflow["eft_val_total"] = len(self.events[self.events.TTbarMass < lambda_eff])*weight
+            cutflow["yield"]["eft_val_total"] = len(self.events[self.events.TTbarMass < lambda_eff])*weight
+            cutflow["nevents"]["eft_val_total"] = len(self.events[self.events.TTbarMass < lambda_eff])
 
         selected_events = self.select_two_lep_events()
-        cutflow["n_lep=2"] = len(selected_events)*weight
+        cutflow["yield"]["n_lep=2"] = len(selected_events)*weight
+        cutflow["nevents"]["n_lep=2"] = len(selected_events)
 
         selection.add("leadingLepPT", selected_events.GoodLeptons[:, 0].pt > 25)
         selection.add("OCLep", (selected_events.GoodLeptons[:, 0].charge + selected_events.GoodLeptons[:, 1].charge) == 0)
@@ -50,13 +55,14 @@ class EventSelector:
         mask = ak.Array([True] * len(selected_events))
         for name in selection.names:
             new_mask = selection.all(name)
-            cutflow[name] = ak.sum(mask & new_mask)*weight
+            cutflow["yield"][name] = ak.sum(mask & new_mask)*weight
+            cutflow["nevents"][name] = ak.sum(mask & new_mask)
             mask = mask & new_mask
 
         # Add selection for different channels
-        selection.add("emu", selected_events.GoodLeptons.flavor[:, 0] != selected_events.GoodLeptons.flavor[:, 1])
-        selection.add("ee", (selected_events.GoodLeptons.flavor[:, 0] == "e") & (selected_events.GoodLeptons.flavor[:, 1]=="e"))
-        selection.add("mumu", (selected_events.GoodLeptons.flavor[:, 0] == "mu") & (selected_events.GoodLeptons.flavor[:, 1]=="mu"))
+        # selection.add("emu", selected_events.GoodLeptons.flavor[:, 0] != selected_events.GoodLeptons.flavor[:, 1])
+        # selection.add("ee", (selected_events.GoodLeptons.flavor[:, 0] == "e") & (selected_events.GoodLeptons.flavor[:, 1]=="e"))
+        # selection.add("mumu", (selected_events.GoodLeptons.flavor[:, 0] == "mu") & (selected_events.GoodLeptons.flavor[:, 1]=="mu"))
         
         if channel=="total":
             if not "SM" in self.events.metadata["dataset"]:
@@ -68,6 +74,7 @@ class EventSelector:
                 selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", f"{channel}", "eft_val")]
             else:
                 selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", f"{channel}")]
-            cutflow[channel] = ak.sum(mask & selection.all(channel))*weight
-                            
+            cutflow["yield"][channel] = ak.sum(mask & selection.all(channel))*weight
+            cutflow["nevents"][channel] = ak.sum(mask & selection.all(channel))                
+
         return selected_events, cutflow

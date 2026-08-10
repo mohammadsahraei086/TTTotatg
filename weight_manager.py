@@ -15,7 +15,6 @@ class WeightManager:
         return events.metadata["xsec"]*1000
     
     def luminosity(self, events):
-        return self.run2_luminosity
-    
+        return self.run2_luminosity    
     def sum_genweight(self, events):
         return 1./events.metadata["nevents"]
