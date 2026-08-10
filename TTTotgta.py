@@ -19,7 +19,7 @@ class TTPairTotatg(processor.ProcessorABC):
         self.hist_manager.define_axes()
         self.hist_manager.define_histograms()
         self.histograms = self.hist_manager.get_histograms()
-        self.categories = ["total", "emu", "ee", "mumu"]
+        self.categories = ["total"] # , "emu", "ee", "mumu"
     
     def define_output_layout(self):
         output = {}

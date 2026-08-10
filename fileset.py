@@ -17,9 +17,36 @@ fileset_test = {
     #         "nevents": 100000
     #     }
     # },
+    # "SMttgamma": {
+    #     "files": {
+    #         "/home/mohammad/softwares/MG5_aMC_v2.9.18/MG5_aMC_v2_9_18/my_samples/test/ttg/Events/run_04/tag_1_delphes_events.root"
+    #     },
+    #     "metadata":{
+    #         "xsec": 2.48,
+    #         "nevents": 50000
+    #     }
+    # },
+    # "SMttgamma_100_200": {
+    #     "files": {
+    #         "/home/mohammad/softwares/MG5_aMC_v2.9.18/MG5_aMC_v2_9_18/my_samples/test/ttg/Events/run_02/tag_1_delphes_events.root"
+    #     },
+    #     "metadata":{
+    #         "xsec": 0.0579,
+    #         "nevents": 13677
+    #     }
+    # },
+    # "SMttgamma_200_inf": {
+    #     "files": {
+    #         "/home/mohammad/softwares/MG5_aMC_v2.9.18/MG5_aMC_v2_9_18/my_samples/test/ttg/Events/run_03/tag_1_delphes_events.root"
+    #     },
+    #     "metadata":{
+    #         "xsec": 0.0119,
+    #         "nevents": 20000
+    #     }
+    # },
     "SMttgamma": {
         "files": {
-            "/home/mohammad/softwares/MG5_aMC_v2.9.18/MG5_aMC_v2_9_18/my_samples/test/ttg/Events/run_04/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/SMttgamma/Events/laptop_gen/ttgamma_10_100.root"
         },
         "metadata":{
             "xsec": 2.48,
@@ -28,20 +55,31 @@ fileset_test = {
     },
     "SMttgamma_100_200": {
         "files": {
-            "/home/mohammad/softwares/MG5_aMC_v2.9.18/MG5_aMC_v2_9_18/my_samples/test/ttg/Events/run_02/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/SMttgamma/Events/laptop_gen/ttgamma_100_200.root"
         },
         "metadata":{
             "xsec": 0.0579,
             "nevents": 13677
         }
     },
-    "SMttgamma_200_inf": {
+    "Signal_500": {
         "files": {
-            "/home/mohammad/softwares/MG5_aMC_v2.9.18/MG5_aMC_v2_9_18/my_samples/test/ttg/Events/run_03/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/M500/Events/run_01/tag_1_delphes_events.root"
         },
         "metadata":{
-            "xsec": 0.0119,
-            "nevents": 20000
+            "xsec": 0.05511,
+            "nevents": 100000,
+            "mass": 500
+        }
+    },
+    "Signal_3000": {
+        "files": {
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/3000/Events/run_01/tag_1_delphes_events.root"
+        },
+        "metadata":{
+            "xsec": 2.982e-09,
+            "nevents": 100000,
+            "mass": 3000
         }
     },
 }
