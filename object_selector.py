@@ -29,7 +29,7 @@ class ObjectSelector:
             anc_pdg    = particles.PID[safe_idx]
             anc_mother = particles.M1[safe_idx]
     
-            is_beam = (abs(anc_pdg) == 2212) | (abs(anc_pdg) == 2112)   # exclude beam (anti)protons/neutrons
+            is_beam = (abs(anc_pdg) == 2212) | (abs(anc_pdg) == 2112) | (abs(anc_pdg) == 9000017)   # exclude beam (anti)protons/neutrons
             anc_is_hadron = valid & (abs(anc_pdg) >= 100) & (~is_beam)
             hit_hadron = hit_hadron | anc_is_hadron
     
