@@ -136,7 +136,7 @@ class HistogramXSecPlotter:
             spine.set_linewidth(2) 
             
         
-        sigma = np.sqrt(self.errors["theory unc."]**2 + self.errors["stat_delphes"]**2  + self.errors["stat_pythia"]**2)  
+        sigma = np.sqrt(self.errors["theory unc."]**2 + self.errors["stat_delphes"]**2)  #+ self.errors["stat_pythia"]**2)  
         chi2, dof, chi2_per_dof, pval = self.compute_chi2(
             self.signal_components["SMttgamma"], 
             self.mc_values["MG5+PYTHIA8"], 
