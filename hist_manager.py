@@ -7,6 +7,7 @@ from typing import Callable, List, Optional
 from axis_selection import *
 
 from weight_manager import WeightManager
+from weight_variations import VARIATIONS
 
 @dataclass
 class Axis:
@@ -27,12 +28,29 @@ class Axis:
         raise NotImplementedError(f"Provide a function parameter when creating Axis {self.name}")
 
 class Histogram:
-    def __init__(self,name, axes:List[Axis], weights=None):
+    # Category label used for the un-varied histogram. Kept distinct from
+    # the "MUF=1.0_MUR=1.0_PDF=247000" entry in VARIATIONS so the plain
+    # nominal weight (no ratio applied) is always available as a cross-check
+    # against that variation, which should come out identical.
+    NOMINAL_LABEL = "nominal"
+
+    def __init__(self, name, axes:List[Axis], weights=None, apply_variations=False):
         self.name = name
         self.axes = axes
+        # variations only make sense for weighted histograms
+        self.apply_variations = apply_variations and weights is not None
         hist_axis = []
         for axis in self.axes:
             hist_axis.append(self.get_hist_axis(axis))
+        if self.apply_variations:
+            hist_axis.append(
+                hist.axis.StrCategory(
+                    [self.NOMINAL_LABEL] + VARIATIONS,
+                    name="variation",
+                    label="Scale/PDF systematic variation",
+                    growth=False,
+                )
+            )
         self.weights = weights
         self.histogram = hist.Hist(*hist_axis, name=name, storage="weight")
 
@@ -81,12 +99,30 @@ class Histogram:
         ax = {}
         for axis in self.axes:
             ax[axis.name] = axis.get_variable(events)
-        if self.weights is not None:
-            weight_manager = WeightManager()
+
+        if self.weights is None:
+            self.histogram.fill(**ax)
+            return
+
+        weight_manager = WeightManager()
+
+        if not self.apply_variations:
             weight = weight_manager.get_weights(events, *self.weights)
             self.histogram.fill(**ax, weight=weight)
-        else:
-            self.histogram.fill(**ax)
+            return
+
+        # nominal: usual xsec*luminosity/sum_genweight normalization, no
+        # scale/PDF reweighting applied
+        nominal_weight = weight_manager.get_weights(events, *self.weights)
+        self.histogram.fill(**ax, variation=self.NOMINAL_LABEL, weight=nominal_weight)
+
+        # each scale/PDF variation: same normalization, reweighted by the
+        # ratio of that variation's weight to the nominal weight
+        for variation_name in VARIATIONS:
+            varied_weight = weight_manager.get_weights(
+                events, *self.weights, "variation", variation=variation_name
+            )
+            self.histogram.fill(**ax, variation=variation_name, weight=varied_weight)
 
     def get_histogram(self):
         return self.histogram
@@ -134,23 +170,28 @@ class HistManager:
     def define_histograms(self):
         self.add_histogram("photon_pt",
                            [self.axes["photon_pt"]],
-                           ["xsec", "luminosity", "sum_genweight"]
+                           ["xsec", "luminosity", "sum_genweight"],
+                           apply_variations=True
                           )
         self.add_histogram("diff_xsec_photon_pt",
                            [self.axes["xsec_photon_pt"]],
-                           ["xsec", "luminosity", "sum_genweight"]
+                           ["xsec", "luminosity", "sum_genweight"],
+                           apply_variations=True
                           )
         self.add_histogram("deltaeta_ll",
                            [self.axes["deltaeta_ll"]],
-                           ["xsec", "luminosity", "sum_genweight"]
+                           ["xsec", "luminosity", "sum_genweight"],
+                           apply_variations=True
                           )
         self.add_histogram("deltaphi_ll",
                            [self.axes["deltaphi_ll"]],
-                           ["xsec", "luminosity", "sum_genweight"]
+                           ["xsec", "luminosity", "sum_genweight"],
+                           apply_variations=True
                           )
         self.add_histogram("ptl1plusptl2",
                            [self.axes["ptl1plusptl2"]],
-                           ["xsec", "luminosity", "sum_genweight"]
+                           ["xsec", "luminosity", "sum_genweight"],
+                           apply_variations=True
                           )
         self.add_histogram("jets_multiplicity",
                            [self.axes["jet_multiplicity"]],
@@ -171,9 +212,10 @@ class HistManager:
     def add_histogram(self,
                       name,
                       axes:List[str],
-                      weights= None
+                      weights= None,
+                      apply_variations = False
                      ):
-        self.histograms[name] = Histogram(name, axes, weights)
+        self.histograms[name] = Histogram(name, axes, weights, apply_variations)
         
     def get_histogram(self, name):
         return self.histograms[name]
