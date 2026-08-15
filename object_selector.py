@@ -18,7 +18,7 @@ class ObjectSelector:
             (self.particles.PID == 22) & (self.particles.Status == 1) # & is_prompt
         ]
         
-    def compute_is_prompt(self, particles, max_depth=20):
+    def compute_is_prompt(self, particles, max_depth=15):
         pdgId = particles.PID
         current_idx = particles.M1
         hit_hadron = ak.zeros_like(pdgId, dtype=bool)
