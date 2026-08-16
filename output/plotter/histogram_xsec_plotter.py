@@ -4,6 +4,8 @@ from matplotlib.patches import Patch
 import json
 import copy
 
+from compute_uncertainties import compute_systematic_uncertainties as com_sys
+
 from coffea.util import load
 
 from histogram_plotter import create_CMS_histograms, cms_color
@@ -12,9 +14,10 @@ class HistogramXSecPlotter:
     def __init__(self, output):
         self.output = output
         
-    def extract_hist_data(self, hist_name, normalize):
+    def extract_hist_data(self, signals, hist_name, normalize):
         
-        self.histograms = self.hist_info[hist_name]
+        # self.histograms = self.hist_info[hist_name]
+        self.histograms = com_sys(self.hist_info[hist_name])
         #Inforamtion from arXiv: 2201.07301v2 and https://www.hepdata.net/record/ins2013377
         cms_info = create_CMS_histograms(f"json_files/{hist_name}.json")
         self.histograms.update(cms_info)
@@ -35,13 +38,11 @@ class HistogramXSecPlotter:
                 self.mc_values[sample] = np.array(self.histograms[sample].values())/self.bin_widths
                 
         self.signal_components = {}
-        for signal in self.histograms.keys():
-            if (not "MG5" in signal) and (signal != "errors") and (signal != "Observed"):
-                epsilon = np.array(self.histograms[signal].values())/self.output["cutflow"]["total"][signal]["primary"]
-                print(epsilon)
-                self.signal_components[signal] = np.array(self.histograms[signal].values())/(138*(self.bin_widths))
-                # print(signal, np.sum(np.array(self.histograms[signal].values())/(138)))
-                print(signal,np.array(self.histograms[signal].values())/(138*self.bin_widths))
+        for signal in signals:
+            self.signal_components[signal] = {}
+            for val in ['nominal', 'total_up', 'total_down']:
+                self.signal_components[signal][val] = np.array(self.histograms[signal][val])/(138*(self.bin_widths))
+                
         self.x_axis_name = self.histograms["Observed"].axes[0].label
         
         if normalize:
@@ -50,9 +51,10 @@ class HistogramXSecPlotter:
             self.data_values = self.data_values/(np.sum(self.data_values*self.bin_widths))
             for sample in self.mc_values.keys():
                 self.mc_values[sample] = self.mc_values[sample]/(np.sum(self.mc_values[sample]*self.bin_widths))
-            for signal in self.histograms.keys():
-                if not "MG5" in signal and signal != "errors" and (signal != "Observed"):
-                    self.signal_components[signal] = self.signal_components[signal]/(np.sum(self.signal_components[signal]*self.bin_widths))
+            for signal in signals:
+                scale = (np.sum(self.signal_components[signal]["nominal"]*self.bin_widths))
+                for val in ['nominal', 'total_up', 'total_down']:
+                    self.signal_components[signal][val] = self.signal_components[signal][val]/scale
                 
         self.colors = [cms_color["orange"], cms_color["purple"], cms_color["red"], cms_color["beige"], cms_color["blue"], cms_color["dark_gray"],]
                 
@@ -80,10 +82,10 @@ class HistogramXSecPlotter:
         )
         
         for i, signal in enumerate(signals):
-            values = self.signal_components[signal]
+            values = self.signal_components[signal]["nominal"]
             self.ax.step(
                 self.bins, np.append(values, values[-1]), where='post',
-                alpha=1, linestyle="-", label="tt$\gamma$", color=self.colors[i], linewidth=2
+                alpha=1, linestyle="-", label=signal, color=self.colors[i], linewidth=2
             )
         
         lower = self.mc_values["MG5+PYTHIA8"] - self.errors["theory unc."]
@@ -95,6 +97,17 @@ class HistogramXSecPlotter:
             step='post', facecolor="None", alpha=0.9, hatch='////',
             label="theory unc.", edgecolor='black', linewidth=0
         )
+
+        for i, signal in enumerate(signals):
+            lower_sig = self.signal_components[signal]["nominal"] - self.signal_components[signal]["total_down"]
+            upper_sig = self.signal_components[signal]["nominal"] + self.signal_components[signal]["total_up"]
+            self.ax.fill_between(
+                self.bins,
+                np.append(lower_sig, lower_sig[-1]),
+                np.append(upper_sig, upper_sig[-1]),
+                step='post', facecolor="None", alpha=0.9, hatch='////',
+                edgecolor=self.colors[i], linewidth=0
+            )
         
         # cats = {"emu": "$e\mu$", "ee": "$ee$", "mumu": "$\mu\mu$"}
         # self.ax.text(0.75, 0.45, cats[channel], transform=self.ax.transAxes, 
@@ -138,14 +151,7 @@ class HistogramXSecPlotter:
                 ha='right',  # horizontal alignment right
                 va='bottom',  # vertical alignment bottom
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='none'))  # optional background
-        self.ax.text(0.4, 1.02, 'MG5+PYTHIA+DELPHES', 
-                transform=self.ax.transAxes,  # Use axes coordinates (0 to 1)
-                fontsize=18, 
-                # fontweight='bold',
-                ha='right',  # horizontal alignment right
-                va='bottom',  # vertical alignment bottom
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='none'))  # optional background
-        
+                
     def plot_ratio(self):
         mc_ratio_pythia = self.mc_values["MG5+PYTHIA8"] / self.data_values
         mc_ratio_herwig = self.mc_values["MG5+HERWIG7"] / self.data_values
@@ -194,15 +200,15 @@ class HistogramXSecPlotter:
         # ax_bottom.set_xticks(bins)
 
             
-    def plot_histograms(self, hist_info, hist_name, signal=[], normalize=False):
+    def plot_histograms(self, hist_info, hist_name, signals=[], normalize=False):
         self.hist_info = hist_info
         name = hist_name
         if normalize:
             name = name + "_normalized"
             
-        self.extract_hist_data(hist_name, normalize)
+        self.extract_hist_data(signals, hist_name, normalize)
         self.define_figure()
-        self.plot_datamc(signal, hist_name, normalize)
+        self.plot_datamc(signals, hist_name, normalize)
         self.plot_ratio()
         plt.savefig(f"plots/{name}.png", dpi=300, bbox_inches="tight")
         # plt.savefig(f"plots/{name}.pdf", bbox_inches="tight")
@@ -218,7 +224,7 @@ if __name__ == "__main__":
     #     histograms[hist] = {}
     #     for dataset, hist in output["hists"]["total"][hist].items():
     #         histograms[hist][dataset] = hist
-    for hist in ['diff_xsec_photon_pt', "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"]) # "Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"
-        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signal=["SMttgamma"], normalize=True) # 
+    for hist in ['diff_xsec_photon_pt']: # , "deltaphi_ll"
+        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=["Signal_500", "Signal_1000"]) # "Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"
+        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=["Signal_500", "Signal_1000"], normalize=True) # 
 
