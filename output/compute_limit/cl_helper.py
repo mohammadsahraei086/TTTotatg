@@ -78,6 +78,8 @@ def width_prefactor(mass):
     g = gen_val[f"Signal_{mass}"]["g"]
     width = gen_val[f"Signal_{mass}"]["width_tg"]
     result = curve_fit(lambda x, a:  a * x ** 2, g, width)
+    print("Mass:", mass)
+    print("Width prefactor:", result)
     return result[0][0]
 
 
@@ -85,63 +87,24 @@ def xsec_factors(mass):
     g = gen_val[f"Signal_{mass}"]["g"]
     xsec = gen_val[f"Signal_{mass}"]["xsec_TT"]
     result = curve_fit(lambda x, a, b, c:  a + b * x ** 2 + c * x ** 4, g, xsec)
+    print("XSec prefactor:", result[0])
+    print("Fit error:", result[1])
     return result[0][0], result[0][1], result[0][2]
 
 
-def compute_acceptance(mass, var):
+def generation_info(mass, var):
     data = load("../output.coffea")
     hist_dict = data['hists']['total'][var]
-    info = com_sys(hist_dict, mass)
+    nominal, uncertainties = com_sys(hist_dict, mass)
 
-    bin_content = np.array(info["nominal"])
     lumi = 138
     xsec = data["metadata"][f"Signal_{mass}"]["xsec"] * 1000
+    acceptance = nominal / (lumi * xsec)
+    
+    print(f"Nominal {var}:", nominal)
+    print(f"Relative uncertainty {var}:", "\n", uncertainties)
 
-    return bin_content / (lumi * xsec)
-
-
-# ---------------------------------------------------------------------------
-# NEW: generation (theory) uncertainties, to be used as NUISANCE PARAMETERS
-# in the chi2 rather than folded into the fixed experimental covariance
-# matrix. This is what the referee/your supervisor asked for.
-# ---------------------------------------------------------------------------
-def get_generation_uncertainties(mass, var):
-    """
-    Returns the fractional, symmetrized, per-bin uncertainty on the signal
-    acceptance/shape coming from PDF, muR and muF variations.
-
-    These are used later as nuisance parameters (see
-    ComputeLimit.profile_chi_square), NOT added into V_inv, precisely
-    because -- as your supervisor pointed out -- they were derived at one
-    fixed value of the coupling and are not valid as a fixed number across
-    the whole (g3g, g3gamma) scan. Treating them as nuisance parameters
-    with their own penalty term lets the fit re-weight how much they can
-    pull the signal at every point in the scan, which is the standard way
-    this is handled in CMS/ATLAS analyses.
-
-    IMPORTANT: this function assumes `compute_systematic_uncertainties`
-    (imported as com_sys) can also return the up/down variations of the
-    photon-pt histogram for each source, e.g. via keys
-    "pdf_up"/"pdf_down", "mur_up"/"mur_down", "muf_up"/"muf_down".
-    You will very likely need to edit the key names below (or how `info`
-    is obtained) to match what your compute_uncertainties.py actually
-    returns -- I don't have that file, so I can't confirm the exact keys.
-    """
-    data = load("../output.coffea")
-    hist_dict = data['hists']['total'][var]
-    info = com_sys(hist_dict, mass)
-
-    nominal = np.array(info["nominal"])
-
-    deltas = {}
-    for source in ["pdf", "mur", "muf"]:
-        up = np.array(info[f"{source}_up"])
-        down = np.array(info[f"{source}_down"])
-        # symmetrized fractional (relative) uncertainty per bin
-        deltas[source] = (up - down) / (2.0 * nominal)
-
-    return deltas
-
+    return acceptance, uncertainties
 
 class HepDataParser:
     """

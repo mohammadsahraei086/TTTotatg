@@ -69,24 +69,24 @@ def compute_systematic_uncertainties(hist_dict: Dict, mass:int) -> Dict:
     # RMS for each bin across all variations
     pdf_unc_ttaa = np.sqrt(np.mean((pdf_values - nominal_ttaa)**2, axis=0))
     
+    nominal = (nominal_ttaa + nominal_ttag)
     
-    total_error = np.sqrt(mur_unc_ttag**2 + muf_unc_ttag*2 + pdf_unc_ttag**2 + mur_unc_ttaa**2 + muf_unc_ttaa**2 + pdf_unc_ttaa**2)
-    total_nominal = (nominal_ttaa + nominal_ttag)
-    total_rel_error = total_error/total_nominal
+    mur = np.sqrt(mur_unc_ttag**2 + mur_unc_ttaa**2)
+    muf = np.sqrt(muf_unc_ttag**2 + muf_unc_ttaa**2)
+    pdf = np.sqrt(pdf_unc_ttag**2 + pdf_unc_ttaa**2)
     
-    # Store the results for this sample
+    total_error = np.sqrt(mur_unc_ttag**2 + muf_unc_ttag**2 + pdf_unc_ttag**2 + mur_unc_ttaa**2 + muf_unc_ttaa**2 + pdf_unc_ttaa**2)
+    total_rel_error = total_error/nominal
+    
     uncertainties = {
-        'nominal': total_nominal.tolist(),
-        # 'mur_up': mur_unc_up.tolist(),
-        # 'mur_down': mur_unc_down.tolist(),
-        # 'muf_up': muf_unc_up.tolist(),
-        # 'muf_down': muf_unc_down.tolist(),
-        # 'pdf_unc': pdf_unc.tolist(),  # symmetric
-        'total_error': total_error.tolist(),
-        'total_rel_error': total_rel_error.tolist(),
+        'mur_rel': (mur/nominal),
+        'muf_rel': (muf/nominal),
+        'pdf_rel': (pdf/nominal),  # symmetric
+        # 'total_error': total_error.tolist(),
+        # 'total_rel_error': total_rel_error.tolist(),
     }
     
-    return uncertainties
+    return nominal, uncertainties
     
 def save_uncertainties(uncertainties: Dict, output_file: str = 'uncertainties.json'):
     """
@@ -119,4 +119,4 @@ if __name__ == "__main__":
             
         
         # Save the results
-        save_uncertainties(uncertainties_dict, "json_files/" + var + "_error.json")
+        # save_uncertainties(uncertainties_dict, "json_files/" + var + "_error.json")

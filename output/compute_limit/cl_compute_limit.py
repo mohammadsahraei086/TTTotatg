@@ -3,7 +3,7 @@ import scipy
 from scipy.stats import chi2
 
 from coffea.util import load
-from helper import *
+from cl_helper import *
 
 
 class ComputeLimit:
@@ -17,18 +17,9 @@ class ComputeLimit:
 
         self.a0, self.a1, self.a2 = xsec_factors(mass)
 
-        self.acceptance = compute_acceptance(mass, var)
-
         self.V_inv = HepDataParser().get_inverse_covariance_matrix(self.var)
 
-        # --- NEW ---
-        # Fractional per-bin generation uncertainties (pdf, muR, muF).
-        # These are NOT folded into V_inv. Instead they enter the chi2 as
-        # nuisance parameters (see get_signal_vector / chi_square /
-        # profile_chi_square below), each with its own unit-Gaussian
-        # penalty term, and are profiled out (minimized over) at every
-        # point of the (g3g, g3gamma) grid.
-        self.nuisance_deltas = get_generation_uncertainties(mass, var)
+        self.acceptance, self.nuisance_deltas = generation_info(mass, var)
         self.nuisance_names = list(self.nuisance_deltas.keys())
 
     def compute_branching_ratios(self, g3g, g3gamma):
