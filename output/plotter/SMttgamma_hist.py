@@ -210,7 +210,7 @@ class HistogramXSecPlotter:
         # Set labels and limits
         self.rax.set_xlabel(self.x_axis_name, fontsize=20)
         self.rax.set_ylabel('ratio', fontsize=20)
-        self.rax.set_ylim(0.1, 1.4)
+        self.rax.set_ylim(0.6, 1.4)
         self.rax.set_xlim(self.bins[0], self.bins[-1])
         self.rax.minorticks_on()
         self.rax.grid(True, alpha=0.3)

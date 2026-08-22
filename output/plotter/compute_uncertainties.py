@@ -42,7 +42,7 @@ def compute_systematic_uncertainties(hist_dict: Dict) -> Dict:
         # 1. MUR uncertainty
         mur_up_vals = hist_obj[{'variation': mur_up}].values()
         mur_down_vals = hist_obj[{'variation': mur_down}].values()
-        
+                
         mur_unc_up = abs(mur_up_vals - nominal)
         mur_unc_down = abs(nominal - mur_down_vals)
         
@@ -95,8 +95,9 @@ def compute_systematic_uncertainties(hist_dict: Dict) -> Dict:
     new_uncertainties = {}
     for mass in [500 + 250*i for i in range(11)]:
         new_uncertainties["Signal_" + str(mass)] = {}
-        for val in ['nominal', 'total_up', 'total_down']:
-            new_uncertainties["Signal_" + str(mass)][val] = (uncertainties["Signal_" + str(mass)][val] + uncertainties["ttaa_" + str(mass)][val]).tolist()
+        new_uncertainties["Signal_" + str(mass)]['nominal'] = (uncertainties["Signal_" + str(mass)]['nominal'] + uncertainties["ttaa_" + str(mass)]['nominal']).tolist()
+        for val in ['total_up', 'total_down']:
+            new_uncertainties["Signal_" + str(mass)][val] = np.sqrt(((uncertainties["Signal_" + str(mass)][val])**2)) #+ (uncertainties["ttaa_" + str(mass)][val])**2)).tolist()
         new_uncertainties["Signal_" + str(mass)]['bin_edges'] = uncertainties["Signal_" + str(mass)]['bin_edges']
     
     return new_uncertainties

@@ -57,7 +57,7 @@ gen_val = {
         "g": np.array([5, 7, 9, 11, 13]),
         "width_tg": [32.6886, 64.0697, 105.911, 158.213, 220.975],
         "xsec_TT": [1.017082e-05, 1.108402e-05, 1.277048e-05, 1.576809e-05, 2.057444e-05],
-        "width_wb": 0.9931809480283327 
+        "width_wb": 0.9931809480283327
     },
     "Signal_2750": {
         "g": np.array([5, 7, 9, 11, 13]),
@@ -78,140 +78,106 @@ def width_prefactor(mass):
     g = gen_val[f"Signal_{mass}"]["g"]
     width = gen_val[f"Signal_{mass}"]["width_tg"]
     result = curve_fit(lambda x, a:  a * x ** 2, g, width)
-    # print("width factor:", result)
-
+    print("Mass:", mass)
+    print("Width prefactor:", result)
     return result[0][0]
+
 
 def xsec_factors(mass):
     g = gen_val[f"Signal_{mass}"]["g"]
     xsec = gen_val[f"Signal_{mass}"]["xsec_TT"]
     result = curve_fit(lambda x, a, b, c:  a + b * x ** 2 + c * x ** 4, g, xsec)
-    # print("xsec factors:", result[0])
-    # print("error xsec factors:","\n", result[1],"\n")
-    
+    print("XSec prefactor:", result[0])
+    print("Fit error:", result[1])
     return result[0][0], result[0][1], result[0][2]
 
-def compute_acceptance(mass, var):
+
+def generation_info(mass, var):
     data = load("../output.coffea")
     hist_dict = data['hists']['total'][var]
-    info = com_sys(hist_dict, mass)
-    
-    bin_content = np.array(info["nominal"])
+    nominal, uncertainties = com_sys(hist_dict, mass)
+
     lumi = 138
     xsec = data["metadata"][f"Signal_{mass}"]["xsec"] * 1000
+    acceptance = nominal / (lumi * xsec)
     
-    return bin_content/(lumi * xsec)
-    
-    
-    
+    print(f"Nominal {var}:", nominal)
+    print(f"Relative uncertainty {var}:", "\n", uncertainties)
+
+    return acceptance, uncertainties
+
 class HepDataParser:
     """
-    A class to parse HEPData JSON files and extract cross sections, errors, 
+    A class to parse HEPData JSON files and extract cross sections, errors,
     and correlation matrices.
     """
-    
+
     def __init__(self):
         pass
-        
+
     @staticmethod
     def parse_cross_section(json_file_path):
-        """
-        Parses the main cross section JSON file to extract:
-        - Bin edges
-        - Central values (observed cross section)
-        - Statistical errors
-        - Systematic errors
-        
-        Returns:
-            dict: Dictionary with 'bins', 'values', 'stat_errors', 'syst_errors'
-        """
         with open(json_file_path, 'r') as f:
             data = json.load(f)
-        
+
         result = {'bins': [], 'values': [], 'stat_errors': [], 'syst_errors': []}
-        
+
         for entry in data['values']:
-            # Extract bin edges
             bin_low = entry['x'][0]['low']
             bin_high = entry['x'][0]['high']
             result['bins'].append((float(bin_low), float(bin_high)))
-            
-            # Extract central value
+
             result['values'].append(float(entry['y'][0]['value']))
-            
-            # Extract errors
+
             for error in entry['y'][0]['errors']:
                 if error.get('label') == 'stat':
                     result['stat_errors'].append(float(error['symerror']))
                 elif error.get('label') == 'syst':
                     result['syst_errors'].append(float(error['symerror']))
-        
-        # Convert to numpy arrays
+
         for key in ['values', 'stat_errors', 'syst_errors']:
             result[key] = np.array(result[key])
-            
+
         return result
 
     @staticmethod
     def parse_correlation_matrix(json_file_path, bins):
-        """
-        Parses the correlation matrix JSON file and constructs a proper matrix.
-        
-        Returns:
-            np.ndarray: Correlation matrix of shape (n_bins, n_bins)
-        """
         with open(json_file_path, 'r') as f:
             data = json.load(f)
-        
-        # Initialize correlation matrix
+
         n_bins = len(bins)
         corr_matrix = np.eye(n_bins)
-        
-        # Create a mapping from bin ranges to indices
+
         bin_to_index = {}
         for idx, (low, high) in enumerate(bins):
             bin_to_index[(low, high)] = idx
-        
-        # Fill the correlation matrix from the JSON data
+
         for entry in data['values']:
-            # Get bin ranges from the x values
             x_bins = entry['x']
             bin1 = (float(x_bins[0]['low']), float(x_bins[0]['high']))
             bin2 = (float(x_bins[1]['low']), float(x_bins[1]['high']))
-            
-            # Get the correlation value and convert from percentage to fraction
+
             correlation_value = float(entry['y'][0]['value']) / 100.0
-            
-            # Find the indices for these bins
+
             if bin1 in bin_to_index and bin2 in bin_to_index:
                 i = bin_to_index[bin1]
                 j = bin_to_index[bin2]
                 corr_matrix[i, j] = correlation_value
-                corr_matrix[j, i] = correlation_value  # Symmetric matrix
-        
+                corr_matrix[j, i] = correlation_value
+
         return corr_matrix
-    
+
     @staticmethod
     def build_covariance_matrix(errors, correlation_matrix):
-        """
-        Builds covariance matrix from errors and correlation matrix.
-        
-        Args:
-            errors (np.array): Array of errors (statistical or systematic)
-            correlation_matrix (np.ndarray): Correlation matrix
-            
-        Returns:
-            np.ndarray: Covariance matrix
-        """
         n_bins = len(errors)
         covariance_matrix = np.zeros((n_bins, n_bins))
-        
+
         for i in range(n_bins):
             for j in range(n_bins):
                 covariance_matrix[i, j] = errors[i] * errors[j] * correlation_matrix[i, j]
-        
+
         return covariance_matrix
-    
+
     def get_inverse_covariance_matrix(self, var):
         data = HepDataParser.parse_cross_section(f"json_files/{var}.json")
         bins = data['bins']
@@ -219,9 +185,9 @@ class HepDataParser:
         corr_syst = HepDataParser.parse_correlation_matrix("json_files/syst_corr_pt.json", bins)
         V_stat = HepDataParser.build_covariance_matrix(data['stat_errors'], corr_stat)
         V_syst = HepDataParser.build_covariance_matrix(data['syst_errors'], corr_syst)
-              
+
         V = V_stat + V_syst
-        
+
         self.V_inv = np.linalg.inv(V)
-        
+
         return self.V_inv

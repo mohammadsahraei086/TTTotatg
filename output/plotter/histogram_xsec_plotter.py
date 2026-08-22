@@ -13,7 +13,58 @@ from histogram_plotter import create_CMS_histograms, cms_color
 class HistogramXSecPlotter:
     def __init__(self, output):
         self.output = output
-        
+
+    @staticmethod
+    def _propagate_normalized_error(values, errors, bin_widths, norm=None):
+        """
+        Correct error propagation for a "normalize to unit area" transform.
+
+        If f_i = v_i / N with N = sum_j v_j * w_j (w_j = bin width), then N
+        itself depends on every bin, so the naive err_i/N is WRONG: it treats
+        N as a fixed constant and ignores the anti-correlation the
+        normalization introduces between bins (a fluctuation up in one bin
+        pulls every other normalized bin down slightly, and pulls the bin
+        itself down too, since it also inflates N).
+
+        The correct (first-order / linear error propagation) result, assuming
+        the input per-bin errors are uncorrelated with each other, comes from
+        the Jacobian:
+
+            d f_i / d v_k = delta_ik / N  -  v_i * w_k / N^2
+
+            var(f_i) = sum_k (df_i/dv_k)^2 * err_k^2
+                     = err_i^2 / N^2
+                       - 2 * v_i * w_i * err_i^2 / N^3
+                       + (v_i^2 / N^4) * sum_k (w_k * err_k)^2
+
+        Sanity check: for a single-bin histogram this correctly gives
+        var(f_i) = 0 (normalizing a single bin to unit area leaves no
+        freedom, so it can't carry an uncertainty).
+
+        Note: this assumes the errors passed in are uncorrelated bin-to-bin
+        (true for independent stat/Poisson errors; an approximation for an
+        already-combined symmetric systematic envelope, since the original
+        bin-to-bin correlations of the underlying variations aren't
+        preserved once everything's been collapsed into a single up/down
+        band). If you need to be exact for the signal systematics, normalize
+        each MUR/MUF/PDF variation histogram to unit area *before* taking
+        differences from nominal in compute_uncertainties.py, rather than
+        normalizing the already-combined total_up/total_down band here.
+        """
+        values = np.asarray(values, dtype=float)
+        errors = np.asarray(errors, dtype=float)
+        bin_widths = np.asarray(bin_widths, dtype=float)
+
+        if norm is None:
+            norm = np.sum(values * bin_widths)
+
+        term1 = errors**2 / norm**2
+        term2 = 2 * values * bin_widths * errors**2 / norm**3
+        term3 = (values**2 / norm**4) * np.sum((bin_widths * errors) ** 2)
+
+        var = term1 - term2 + term3
+        return np.sqrt(np.clip(var, 0, None))
+
     def extract_hist_data(self, signals, hist_name, normalize):
         
         # self.histograms = self.hist_info[hist_name]
@@ -46,15 +97,41 @@ class HistogramXSecPlotter:
         self.x_axis_name = self.histograms["Observed"].axes[0].label
         
         if normalize:
-            self.errors["stat"] = self.errors["stat"]/(np.sum(self.data_values*self.bin_widths))
-            self.errors["theory unc."] = self.errors["theory unc."]/(np.sum(self.mc_values["MG5+PYTHIA8"]*self.bin_widths))
-            self.data_values = self.data_values/(np.sum(self.data_values*self.bin_widths))
+            # NOTE: order matters here. Each error must be propagated using
+            # the *un-normalized* central values (and the norm factor they
+            # imply) before those central values get divided down, since the
+            # Jacobian above needs v_i and N from the same (pre-normalization)
+            # stage.
+
+            data_norm = np.sum(self.data_values * self.bin_widths)
+            self.errors["stat"] = self._propagate_normalized_error(
+                self.data_values, self.errors["stat"], self.bin_widths, norm=data_norm
+            )
+            self.data_values = self.data_values / data_norm
+
+            # theory unc. is drawn as a band around MG5+PYTHIA8, so it must be
+            # propagated using MG5+PYTHIA8's own normalization, evaluated
+            # before MG5+PYTHIA8 itself gets normalized below.
+            mc_norm = np.sum(self.mc_values["MG5+PYTHIA8"] * self.bin_widths)
+            self.errors["theory unc."] = self._propagate_normalized_error(
+                self.mc_values["MG5+PYTHIA8"], self.errors["theory unc."], self.bin_widths, norm=mc_norm
+            )
+
             for sample in self.mc_values.keys():
                 self.mc_values[sample] = self.mc_values[sample]/(np.sum(self.mc_values[sample]*self.bin_widths))
+
             for signal in signals:
-                scale = (np.sum(self.signal_components[signal]["nominal"]*self.bin_widths))
-                for val in ['nominal', 'total_up', 'total_down']:
-                    self.signal_components[signal][val] = self.signal_components[signal][val]/scale
+                nominal = self.signal_components[signal]["nominal"]
+                sig_norm = np.sum(nominal * self.bin_widths)
+                up = self._propagate_normalized_error(
+                    nominal, self.signal_components[signal]["total_up"], self.bin_widths, norm=sig_norm
+                )
+                down = self._propagate_normalized_error(
+                    nominal, self.signal_components[signal]["total_down"], self.bin_widths, norm=sig_norm
+                )
+                self.signal_components[signal]["nominal"] = nominal / sig_norm
+                self.signal_components[signal]["total_up"] = up
+                self.signal_components[signal]["total_down"] = down
                 
         self.colors = [cms_color["orange"], cms_color["purple"], cms_color["red"], cms_color["beige"], cms_color["blue"], cms_color["dark_gray"],]
                 
@@ -203,6 +280,9 @@ class HistogramXSecPlotter:
     def plot_histograms(self, hist_info, hist_name, signals=[], normalize=False):
         self.hist_info = hist_info
         name = hist_name
+        if len(signals) == 1:
+            mass = signals[0].split("_")[1]
+            name = name + "_" + mass
         if normalize:
             name = name + "_normalized"
             
@@ -218,13 +298,12 @@ class HistogramXSecPlotter:
 if __name__ == "__main__":
     # hist_plotter = HistogramPlotter()
     output = load("../output.coffea")
-    xsec_hist_plotter = HistogramXSecPlotter(output)
+    xsec_hist_plotter = HistogramXSecPlotter(copy.deepcopy(output))
     histograms = {}
-    # for hist in ["diff_xsec_photon_pt", "deltaeta_ll", "deltaphi_ll", "ptl1plusptl2"]:
-    #     histograms[hist] = {}
-    #     for dataset, hist in output["hists"]["total"][hist].items():
-    #         histograms[hist][dataset] = hist
-    for hist in ['diff_xsec_photon_pt']: # , "deltaphi_ll"
-        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=["Signal_500", "Signal_1000"]) # "Signal_500", "Signal_1000", "Signal_1500", "Signal_2000"
-        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=["Signal_500", "Signal_1000"], normalize=True) # 
-
+    # for mass in [500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]:
+    #     for hist in ['diff_xsec_photon_pt', "deltaphi_ll"]: # , "deltaphi_ll"
+    #         xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=[f"Signal_{mass}"]) # "Signal_500", "Signal_1000"
+    #         xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=[f"Signal_{mass}"], normalize=True) #
+    for hist in ['diff_xsec_photon_pt', "deltaphi_ll"]: # , "deltaphi_ll"
+        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=["Signal_500", "Signal_1000"]) # "Signal_500", "Signal_1000"
+        xsec_hist_plotter.plot_histograms(copy.deepcopy(output["hists"]["total"]), hist, signals=["Signal_500", "Signal_1000"], normalize=True) #
