@@ -1,4 +1,5 @@
 from coffea.analysis_tools import PackedSelection
+from coffea.processor import column_accumulator
 import awkward as ak
 
 class EventSelector:
@@ -64,9 +65,13 @@ class EventSelector:
         # selection.add("ee", (selected_events.GoodLeptons.flavor[:, 0] == "e") & (selected_events.GoodLeptons.flavor[:, 1]=="e"))
         # selection.add("mumu", (selected_events.GoodLeptons.flavor[:, 0] == "mu") & (selected_events.GoodLeptons.flavor[:, 1]=="mu"))
         
+        selected_before_MTT = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
+        MTT_array = column_accumulator(ak.to_numpy(selected_before_MTT.TTbarMass))
         if channel=="total":
             if not "SM" in self.events.metadata["dataset"]:
+                selected_before_MTT = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
                 selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", "eft_val")]
+                MTT_array = column_accumulator(ak.to_numpy(selected_before_MTT.TTbarMass))
             else:
                 selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
         else:
@@ -77,4 +82,4 @@ class EventSelector:
             cutflow["yield"][channel] = ak.sum(mask & selection.all(channel))*weight
             cutflow["nevents"][channel] = ak.sum(mask & selection.all(channel))                
 
-        return selected_events, cutflow
+        return selected_events, cutflow, MTT_array

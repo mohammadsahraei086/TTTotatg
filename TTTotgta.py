@@ -26,6 +26,7 @@ class TTPairTotatg(processor.ProcessorABC):
         output["metadata"] = {}
         output["cutflow"] = {}
         output["hists"] = {}
+        output["MTT_array"] = {}
         
         for cat in self.categories:
             output["cutflow"][cat] = {}
@@ -47,8 +48,9 @@ class TTPairTotatg(processor.ProcessorABC):
         event_selector = EventSelector(self.events)
 
         for cat in self.categories:
-            selected_events, cutflow = event_selector.select_good_events(cat)
+            selected_events, cutflow, MTT_array = event_selector.select_good_events(cat)
             self.output["cutflow"][cat][dataset] = cutflow
+            self.output["MTT_array"][dataset] = MTT_array
             if  len(selected_events) == 0:
                 continue
             for name, hist in self.histograms.items():
