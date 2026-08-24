@@ -4,6 +4,38 @@ from typing import Dict
 import json
 from coffea.util import load
 
+
+def _values_with_overflow_folded(hist_obj, variation, fold_underflow=False):
+    """
+    Return the 1D bin contents for a given `variation` slice of hist_obj,
+    with the overflow bin folded into the last defined bin.
+
+    hist's/boost-histogram's `.values(flow=True)` returns an array shaped
+    like [underflow, bin_0, bin_1, ..., bin_N-1, overflow]. There's no
+    single built-in call that folds *only* the overflow into the last bin
+    while leaving every other bin untouched: the built-in UHI `sum` slicing
+    action (e.g. h[a:hist.overflow:sum]) merges the whole selected range
+    into one bin, so it's meant for collapsing several bins together, not
+    for topping up one existing edge bin with flow content. So this does it
+    by hand on the flow-inclusive array — which is exactly the same
+    value/value arithmetic the built-in sum action performs internally.
+
+    By default the underflow bin is simply dropped (not folded anywhere),
+    matching "I don't want underflow, but I do want overflow added to the
+    last bin". Pass fold_underflow=True if you ever want underflow folded
+    into the first bin instead.
+    """
+    if hist_obj.name == 'diff_xsec_photon_pt':
+        values = hist_obj[{'variation': variation}].values(flow=True)
+        core = values[1:-1].copy()
+        core[-1] += values[-1]
+        if fold_underflow:
+            core[0] += values[0]
+        return core
+    else:
+        return hist_obj[{'variation': variation}].values()
+
+
 def compute_systematic_uncertainties(hist_dict: Dict) -> Dict:
     """
     Compute MUR, MUF, and PDF uncertainties from histograms.
@@ -36,19 +68,19 @@ def compute_systematic_uncertainties(hist_dict: Dict) -> Dict:
             
         print(f"Processing {sample_name}...")
         
-        # Get nominal values
-        nominal = hist_obj[{'variation': nominal_variation}].values()
+        # Get nominal values (overflow folded into the last bin, underflow dropped)
+        nominal = _values_with_overflow_folded(hist_obj, nominal_variation)
         
         # 1. MUR uncertainty
-        mur_up_vals = hist_obj[{'variation': mur_up}].values()
-        mur_down_vals = hist_obj[{'variation': mur_down}].values()
+        mur_up_vals = _values_with_overflow_folded(hist_obj, mur_up)
+        mur_down_vals = _values_with_overflow_folded(hist_obj, mur_down)
                 
         mur_unc_up = abs(mur_up_vals - nominal)
         mur_unc_down = abs(nominal - mur_down_vals)
         
         # 2. MUF uncertainty
-        muf_up_vals = hist_obj[{'variation': muf_up}].values()
-        muf_down_vals = hist_obj[{'variation': muf_down}].values()
+        muf_up_vals = _values_with_overflow_folded(hist_obj, muf_up)
+        muf_down_vals = _values_with_overflow_folded(hist_obj, muf_down)
         
         muf_unc_up = abs(muf_up_vals - nominal)
         muf_unc_down = abs(nominal - muf_down_vals)
@@ -57,7 +89,7 @@ def compute_systematic_uncertainties(hist_dict: Dict) -> Dict:
         pdf_values = []
         for var in pdf_variations:
             try:
-                values = hist_obj[{'variation': var}].values()
+                values = _values_with_overflow_folded(hist_obj, var)
                 pdf_values.append(values)
             except KeyError:
                 continue

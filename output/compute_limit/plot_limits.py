@@ -35,7 +35,7 @@ def get_contour(mass, var, g3g_range, g3gamma_range, n_points, force_recompute=F
     X, Y, Z = compute_limit.find_contour(
         g3g_range=g3g_range, g3gamma_range=g3gamma_range, n_points=n_points
     )
-    np.savez(cache_file, X=X, Y=Y, Z=Z)
+    # np.savez(cache_file, X=X, Y=Y, Z=Z)
     print(f"Saved grid for mass {mass} to {cache_file}")
     return X, Y, Z
 
@@ -50,16 +50,16 @@ def get_contour(mass, var, g3g_range, g3gamma_range, n_points, force_recompute=F
 # titles freely inside main() -- reruns from cache will be fast.
 # ---------------------------------------------------------------------------
 def main():
-    mass_points = [500, 750, 1000, 1250, 1500, 1750, 2000]  # , 2250, 2500, 2750, 3000
-    for var in ["diff_xsec_photon_pt", "deltaphi_ll"]:
-        g3g_range = (0, 1000)
-        g3gamma_range = (0, 800)
+    mass_points = [500, 2000]  # , 2250, 2500, 2750, 3000 ,  750, 1000, 1250, 1500, 1750
+    for var in ["diff_xsec_photon_pt"]: # , "deltaphi_ll"
+        g3g_range = (0, 500)
+        g3gamma_range = (0, 250)
         if var == "deltaphi_ll":
             n_points = 200
             chi2_68 = chi2.ppf(0.68, df=6)
             chi2_95 = chi2.ppf(0.95, df=6)
         else:
-            n_points = 250
+            n_points = 50
             chi2_68 = chi2.ppf(0.68, df=4)
             chi2_95 = chi2.ppf(0.95, df=4)
     

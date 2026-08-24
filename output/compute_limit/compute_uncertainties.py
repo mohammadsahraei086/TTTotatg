@@ -4,6 +4,20 @@ from typing import Dict
 import json
 from coffea.util import load
 
+
+def _values_with_overflow_folded(hist_obj, variation, fold_underflow=False):
+    
+    if hist_obj.name == 'diff_xsec_photon_pt':
+        values = hist_obj[{'variation': variation}].values(flow=True)
+        core = values[1:-1].copy()
+        core[-1] += values[-1]
+        if fold_underflow:
+            core[0] += values[0]
+        return core
+    else:
+        return hist_obj[{'variation': variation}].values()
+
+
 def compute_systematic_uncertainties(hist_dict: Dict, mass:int) -> Dict:
     uncertainties = {}
     
@@ -20,23 +34,23 @@ def compute_systematic_uncertainties(hist_dict: Dict, mass:int) -> Dict:
     #######################################
     hist_ttag = hist_dict[f"Signal_{mass}"]
     #######################################
-    nominal_ttag = hist_ttag[{'variation': nominal_variation}].values()
+    nominal_ttag = _values_with_overflow_folded(hist_ttag, nominal_variation)
     # 1. MUR uncertainty
-    mur_up_ttag = hist_ttag[{'variation': mur_up}].values()
-    mur_down_ttag = hist_ttag[{'variation': mur_down}].values()
+    mur_up_ttag = _values_with_overflow_folded(hist_ttag, mur_up)
+    mur_down_ttag = _values_with_overflow_folded(hist_ttag, mur_down)
     
     mur_unc_ttag = (abs(mur_up_ttag - nominal_ttag) + abs(mur_down_ttag - nominal_ttag))/2
     
     # 2. MUF uncertainty
-    muf_up_ttag = hist_ttag[{'variation': muf_up}].values()
-    muf_down_ttag = hist_ttag[{'variation': muf_down}].values()
+    muf_up_ttag = _values_with_overflow_folded(hist_ttag, muf_up)
+    muf_down_ttag = _values_with_overflow_folded(hist_ttag, muf_down)
     
     muf_unc_ttag = (abs(muf_up_ttag - nominal_ttag) + abs(muf_down_ttag - nominal_ttag))/2
     
     # 3. PDF uncertainty (RMS of 100 variations)
     pdf_values = []
     for var in pdf_variations:
-        values = hist_ttag[{'variation': var}].values()
+        values = _values_with_overflow_folded(hist_ttag, var)
         pdf_values.append(values)
         
     pdf_values = np.array(pdf_values)
@@ -46,23 +60,23 @@ def compute_systematic_uncertainties(hist_dict: Dict, mass:int) -> Dict:
     #######################################
     hist_ttaa = hist_dict[f"ttaa_{mass}"]
     #######################################
-    nominal_ttaa = hist_ttaa[{'variation': nominal_variation}].values()
+    nominal_ttaa = _values_with_overflow_folded(hist_ttaa, nominal_variation)
     # 1. MUR uncertainty
-    mur_up_ttaa = hist_ttaa[{'variation': mur_up}].values()
-    mur_down_ttaa = hist_ttaa[{'variation': mur_down}].values()
+    mur_up_ttaa = _values_with_overflow_folded(hist_ttaa, mur_up)
+    mur_down_ttaa = _values_with_overflow_folded(hist_ttaa, mur_down)
     
     mur_unc_ttaa = (abs(mur_up_ttaa - nominal_ttaa) + abs(mur_down_ttaa - nominal_ttaa))/2
     
     # 2. MUF uncertainty
-    muf_up_ttaa = hist_ttaa[{'variation': muf_up}].values()
-    muf_down_ttaa = hist_ttaa[{'variation': muf_down}].values()
+    muf_up_ttaa = _values_with_overflow_folded(hist_ttaa, muf_up)
+    muf_down_ttaa = _values_with_overflow_folded(hist_ttaa, muf_down)
     
     muf_unc_ttaa = (abs(muf_up_ttaa - nominal_ttaa) + abs(muf_down_ttaa - nominal_ttaa))/2
     
     # 3. PDF uncertainty (RMS of 100 variations)
     pdf_values = []
     for var in pdf_variations:
-        values = hist_ttaa[{'variation': var}].values()
+        values = _values_with_overflow_folded(hist_ttaa, var)
         pdf_values.append(values)
         
     pdf_values = np.array(pdf_values)

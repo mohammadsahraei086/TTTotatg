@@ -147,10 +147,10 @@ class HistogramXSecPlotter:
             self.bins, np.append(self.mc_values["MG5+PYTHIA8"], self.mc_values["MG5+PYTHIA8"][-1]), where='post',
             alpha=0.8, label="MG5+PYTHIA8", color="black", linewidth=2
         )
-        self.ax.step(
-            self.bins, np.append(self.mc_values["MG5+HERWIG7"],self.mc_values["MG5+HERWIG7"][-1]), where='post',
-            alpha=0.8, label="MG5+HERWIG7", color="blue", linewidth=2
-        )
+        # self.ax.step(
+        #     self.bins, np.append(self.mc_values["MG5+HERWIG7"],self.mc_values["MG5+HERWIG7"][-1]), where='post',
+        #     alpha=0.8, label="MG5+HERWIG7", color="blue", linewidth=2
+        # )
             
         self.ax.errorbar(
             self.centers, self.data_values, yerr=self.errors["stat"],
@@ -159,10 +159,11 @@ class HistogramXSecPlotter:
         )
         
         for i, signal in enumerate(signals):
+            mass = signal.split("_")[1]
             values = self.signal_components[signal]["nominal"]
             self.ax.step(
                 self.bins, np.append(values, values[-1]), where='post',
-                alpha=1, linestyle="-", label=signal, color=self.colors[i], linewidth=2
+                alpha=1, linestyle="-", label=f"$M_{{T}}={mass}$", color=self.colors[i], linewidth=2
             )
         
         lower = self.mc_values["MG5+PYTHIA8"] - self.errors["theory unc."]
@@ -239,10 +240,10 @@ class HistogramXSecPlotter:
             self.bins, np.append(mc_ratio_pythia, mc_ratio_pythia[-1]), where='post',
             alpha=0.8, color="black", linewidth=2
         )
-        self.rax.step(
-            self.bins, np.append(mc_ratio_herwig, mc_ratio_herwig[-1]), where='post',
-            alpha=0.8, color="blue", linewidth=2
-        )
+        # self.rax.step(
+        #     self.bins, np.append(mc_ratio_herwig, mc_ratio_herwig[-1]), where='post',
+        #     alpha=0.8, color="blue", linewidth=2
+        # )
 
         # Plot ratio
         self.rax.errorbar(self.centers, data_ratio, yerr=ratio_err, 
