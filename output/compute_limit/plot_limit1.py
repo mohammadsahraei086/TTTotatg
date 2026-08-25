@@ -6,6 +6,7 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import MultipleLocator
 from scipy.stats import chi2
 from compute_limit import ComputeLimit
+from coffea.util import load
 
 # ---------------------------------------------------------------------------
 # Caching: each (mass, var, ranges, n_points, kfactor) grid is computed once
@@ -49,9 +50,24 @@ def compute_width(Mu4, gluonflag, gammaflag):
     MT = 172
     MB = 4.7
     MW = 80.5
-    ((-MT**2 + Mu4**2)*((48*fvec3**2*gammaflag**2*MT**4)/MHDO**2 - (96*fvec3**2*gammaflag**2*MT**2*Mu4**2)/MHDO**2 + (48*fvec3**2*gammaflag**2*Mu4**4)/MHDO**2))/(96.*cmath.pi*abs(Mu4)**3)
-    ((-MT**2 + Mu4**2)*((64*fvec3**2*gluonflag**2*MT**4)/MHDO**2 - (128*fvec3**2*gluonflag**2*MT**2*Mu4**2)/MHDO**2 + (64*fvec3**2*gluonflag**2*Mu4**4)/MHDO**2))/(96.*cmath.pi*abs(Mu4)**3)
-    (((48*fvec3**2*MB**4)/MHDO**2 - (96*fvec3**2*MB**2*Mu4**2)/MHDO**2 + (48*fvec3**2*Mu4**4)/MHDO**2 - (24*fvec3**2*MB**2*MW**2)/MHDO**2 - (144*fvec3**2*MB*Mu4*MW**2)/MHDO**2 - (24*fvec3**2*Mu4**2*MW**2)/MHDO**2 - (24*fvec3**2*MW**4)/MHDO**2)*cmath.sqrt(MB**4 - 2*MB**2*Mu4**2 + Mu4**4 - 2*MB**2*MW**2 - 2*Mu4**2*MW**2 + MW**4))/(96.*cmath.pi*abs(Mu4)**3)
+    width_T = (((-MT**2 + Mu4**2)*((48*fvec3**2*gammaflag**2*MT**4)/MHDO**2 - (96*fvec3**2*gammaflag**2*MT**2*Mu4**2)/MHDO**2 +
+                                   (48*fvec3**2*gammaflag**2*Mu4**4)/MHDO**2))/(96.*cmath.pi*abs(Mu4)**3) + 
+               ((-MT**2 + Mu4**2)*((64*fvec3**2*gluonflag**2*MT**4)/MHDO**2 - (128*fvec3**2*gluonflag**2*MT**2*Mu4**2)/MHDO**2 + 
+                                   (64*fvec3**2*gluonflag**2*Mu4**4)/MHDO**2))/(96.*cmath.pi*abs(Mu4)**3) + 
+               (((48*fvec3**2*MB**4)/MHDO**2 - (96*fvec3**2*MB**2*Mu4**2)/MHDO**2 + (48*fvec3**2*Mu4**4)/MHDO**2 - (24*fvec3**2*MB**2*MW**2)/MHDO**2 - 
+                 (144*fvec3**2*MB*Mu4*MW**2)/MHDO**2 - (24*fvec3**2*Mu4**2*MW**2)/MHDO**2 - (24*fvec3**2*MW**4)/MHDO**2)*cmath.sqrt(MB**4 - 2*MB**2*Mu4**2 + Mu4**4 - 2*MB**2*MW**2 -
+                                                                                                                                    2*Mu4**2*MW**2 + MW**4))/(96.*cmath.pi*abs(Mu4)**3))
+    return width_T/Mu4
+    
+def get_lambda_eff(mass, output_dir="../output.coffea"):
+    output = load(output_dir)
+    MTT = np.max(output["MTT_array"][f"Signal_{mass}"].value)
+    MTT_TeV = MTT/1000
+    
+    return MTT_TeV
+    
+    
+    
     
 # ---------------------------------------------------------------------------
 # Everything below here is your restructured plotting code, unchanged except
