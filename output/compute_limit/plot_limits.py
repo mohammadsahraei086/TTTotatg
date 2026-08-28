@@ -108,14 +108,17 @@ def get_lambda_eff_grid(Xp, Yp):
     """
     with np.errstate(divide='ignore', invalid='ignore'):
         lam = 1.0 / np.sqrt(Xp**2 + Yp**2)
-    return np.where(np.isfinite(lam), lam, 1e6)
-
+    return np.ma.masked_invalid(lam)   # mask, don't fake a value
 
 def get_lambda_eff_threshold(mass, output_dir="../output.coffea"):
     """Max M_TT (in TeV) found in the generated sample for this mass point."""
-    output = load(output_dir)
-    MTT = np.max(output["MTT_array"][f"Signal_{mass}"].value)
-    return MTT / 1000
+    try:
+        output = load(output_dir)
+        MTT = np.max(output["MTT_array"][f"Signal_{mass}"].value)
+        return MTT / 1000
+    except (FileNotFoundError, KeyError, AttributeError) as e:
+        print(f"Warning: Could not load MTT for mass {mass}: {e}")
+        return 1.0  # fallback value
 
 
 # ---------------------------------------------------------------------------
@@ -131,16 +134,16 @@ def get_lambda_eff_threshold(mass, output_dir="../output.coffea"):
 # ---------------------------------------------------------------------------
 def main():
     SHOW_KFACTOR_CONTOURS = False
-    SHOW_WIDTH_VALIDITY_BAND = True
+    SHOW_WIDTH_VALIDITY_BAND = False
     SHOW_WIDTH_VALIDITY_BAND_0p1 = False
     SHOW_WIDTH_VALIDITY_BAND_0p3 = False
-    SHOW_EFT_VALIDITY_BOUNDARY = False
+    SHOW_EFT_VALIDITY_BOUNDARY = True
 
     # 'log' or 'linear' -- switches both x and y axes together.
     AXIS_SCALE = 'log'
     LOG_AXIS_MIN = 1e-2  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
 
-    mass_points = [500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]  #  ,  
+    mass_points = [500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]  #
 
     # First entry is the reference case; further entries are outline-only
     # contours with the next linestyle, same color as their mass.
@@ -160,13 +163,13 @@ def main():
         g3g_range = (0, 1000)
         g3gamma_range = (0, 1000)
         if var == "deltaphi_ll":
-            n_points = 200
+            n_points = 100
             chi2_68 = chi2.ppf(0.68, df=6)
             chi2_95 = chi2.ppf(0.95, df=6)
         else:
             n_points = 300
-            chi2_68 = chi2.ppf(0.68, df=4)
-            chi2_95 = chi2.ppf(0.95, df=4)
+            chi2_68 = chi2.ppf(0.68, df=1)
+            chi2_95 = chi2.ppf(0.95, df=1)
 
         colors = plt.cm.viridis(np.linspace(0, 1, len(mass_points)))
         plt.figure(figsize=(10, 8))
@@ -234,12 +237,10 @@ def main():
                             linewidths=1.0, linestyles=width_high_style)
 
             if SHOW_EFT_VALIDITY_BOUNDARY:
-                # physical Xp, Yp: Lambda_eff is defined in terms of the actual
-                # dimensionful Wilson coefficients, squared
                 mtt_max = get_lambda_eff_threshold(mass)
                 lambda_eff_grid = get_lambda_eff_grid(Xp, Yp)
                 plt.contour(Yp, Xp, lambda_eff_grid, levels=[mtt_max], colors=[colors[i]],
-                            linewidths=1.2, linestyles=[eft_style])
+                            linewidths=1.2, linestyles='dashdot')
 
             patch = Patch(color=colors[i], alpha=0.3, label=f'$m_T$ = {mass} [GeV]')
             mass_legend_handles.append(patch)
@@ -330,7 +331,7 @@ def main():
             y_offset -= 0.03 * (len(handles) + 2)
 
         plt.grid()
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.savefig(f"plots/limit_g_{var}.png")
 
 

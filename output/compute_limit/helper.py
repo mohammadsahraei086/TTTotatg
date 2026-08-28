@@ -92,20 +92,24 @@ def xsec_factors(mass):
     return result[0][0], result[0][1], result[0][2]
 
 
-def generation_info(mass, var):
+def generation_info(mass, var, from_bin=5):
     data = load("../output.coffea")
     hist_dict = data['hists']['total'][var]
-    nominal, uncertainties = com_sys(hist_dict, mass)
+    nominal_gamma, nominal_gammagamma, uncertainties = com_sys(hist_dict, mass, from_bin)
 
     lumi = 138
-    xsec = data["metadata"][f"Signal_{mass}"]["xsec"] * 1000
-    acceptance = nominal / (lumi * xsec)
+    xsec_gamma = data["metadata"][f"Signal_{mass}"]["xsec"] * 1000
+    xsec_gammagama = data["metadata"][f"ttaa_{mass}"]["xsec"] * 1000    
+    acceptance_gamma = nominal_gamma / (lumi * xsec_gamma)
+    acceptance_gammagamma = nominal_gammagamma / (lumi * xsec_gammagama)
     
-    print(f"Nominal {var}:", nominal)
+    print(f"Nominal {var}:", nominal_gamma, nominal_gammagamma)
     print(f"Relative uncertainty {var}:", "\n", uncertainties)
 
-    return acceptance, uncertainties
+    return acceptance_gamma, acceptance_gammagamma, uncertainties
 
+import json
+import numpy as np
 class HepDataParser:
     """
     A class to parse HEPData JSON files and extract cross sections, errors,
@@ -116,7 +120,7 @@ class HepDataParser:
         pass
 
     @staticmethod
-    def parse_cross_section(json_file_path):
+    def parse_cross_section(json_file_path, from_bin=4):
         with open(json_file_path, 'r') as f:
             data = json.load(f)
 
@@ -135,8 +139,8 @@ class HepDataParser:
                 elif error.get('label') == 'syst':
                     result['syst_errors'].append(float(error['symerror']))
 
-        for key in ['values', 'stat_errors', 'syst_errors']:
-            result[key] = np.array(result[key])
+        for key in ['bins', 'values', 'stat_errors', 'syst_errors']:
+            result[key] = np.array(result[key])[from_bin:]
 
         return result
 
@@ -178,8 +182,8 @@ class HepDataParser:
 
         return covariance_matrix
 
-    def get_inverse_covariance_matrix(self, var):
-        data = HepDataParser.parse_cross_section(f"json_files/{var}.json")
+    def get_inverse_covariance_matrix(self, var, from_bin=4):
+        data = HepDataParser.parse_cross_section(f"json_files/{var}.json", from_bin)
         bins = data['bins']
         corr_stat = HepDataParser.parse_correlation_matrix("json_files/stat_corr_pt.json", bins)
         corr_syst = HepDataParser.parse_correlation_matrix("json_files/syst_corr_pt.json", bins)
