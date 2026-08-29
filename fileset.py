@@ -44,14 +44,23 @@ fileset_test = {
     #        "nevents": 13677
     #    }
     #},
-    "Signal_1000": {
+    "Signal_500": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/M1000/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/New_TTtotatg/M500/Events/run_01/tag_1_delphes_events.root"
         },
         "metadata":{
-            "xsec": 0.0006466,
-            "nevents": 100000,
-            "mass": 1000
+            "xsec": 0.05514,
+            "nevents": 50000,
+            "mass": 500
+        }
+    },
+    "ttaa_500": {
+        "files": {
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/New_TTtotatg/ttaa500/Events/run_01/tag_1_delphes_events.root"
+        },
+        "metadata":{
+            "xsec": 0.01989,
+            "nevents": 50000
         }
     },
 }
@@ -178,7 +187,7 @@ fileset = {
     },
     "ttaa_500": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa750/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa500/Events/run_01/tag_1_delphes_events.root"
         },
         "metadata":{
             "xsec": 0.01989,
@@ -187,7 +196,7 @@ fileset = {
     },
     "ttaa_750": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa500/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa750/Events/run_01/tag_1_delphes_events.root"
         },
         "metadata":{
             "xsec": 0.001738,

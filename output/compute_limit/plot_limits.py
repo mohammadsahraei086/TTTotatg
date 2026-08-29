@@ -23,7 +23,7 @@ CACHE_DIR = "contour_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 
-def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.0, force_recompute=False):
+def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, force_recompute=False):
     cache_file = os.path.join(
         CACHE_DIR,
         f"contour_{var}_m{mass}_n{n_points}_k{kfactor:.3f}_"
@@ -143,7 +143,7 @@ def main():
     AXIS_SCALE = 'log'
     LOG_AXIS_MIN = 1e-2  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
 
-    mass_points = [500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]  # , 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000
+    mass_points = [500]  # , 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000
 
     # First entry is the reference case; further entries are outline-only
     # contours with the next linestyle, same color as their mass.
@@ -160,14 +160,14 @@ def main():
     eft_style = (0, (3, 1, 1, 1))  # densely dash-dotted
 
     for var in ["diff_xsec_photon_pt"]:  # , "deltaphi_ll"
-        g3g_range = (0, 1000)
-        g3gamma_range = (0, 1000)
+        g3g_range = (0, 10)
+        g3gamma_range = (0, 10)
         if var == "deltaphi_ll":
             n_points = 100
             chi2_68 = chi2.ppf(0.68, df=6)
             chi2_95 = chi2.ppf(0.95, df=6)
         else:
-            n_points = 300
+            n_points = 200
             chi2_68 = chi2.ppf(0.68, df=1)
             chi2_95 = chi2.ppf(0.95, df=1)
 
@@ -178,12 +178,11 @@ def main():
         for i, mass in enumerate(mass_points):
             X = Y = None
 
-            X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4)
+            Xp, Yp, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4)
             # non_zero_values = Z[Z != 0]
             # print(mass, np.min(non_zero_values))
             # keep the unit conversion here (in the plotting stage), not in the cache,
             # so the cached grid stays reusable even if you change this factor later
-            Xp, Yp = 0.02 * X, 0.02 * Y
 
             # plt.contourf(Yp, Xp, Z, levels=[chi2_95, Z.max()], colors=[colors[i]], alpha=0.3)
             plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
@@ -192,10 +191,9 @@ def main():
                     
             if SHOW_KFACTOR_CONTOURS:
                 
-                X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1)
+                Xp, Yp, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1)
                 # keep the unit conversion here (in the plotting stage), not in the cache,
                 # so the cached grid stays reusable even if you change this factor later
-                Xp, Yp = 0.02 * X, 0.02 * Y
 
                 # plt.contourf(Yp, Xp, Z, levels=[chi2_95, Z.max()], colors=[colors[i]], alpha=0.3)
                 plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
@@ -205,9 +203,8 @@ def main():
             if SHOW_WIDTH_VALIDITY_BAND or SHOW_EFT_VALIDITY_BOUNDARY:
                 if X is None:
                     # need a raw grid even if kfactor contours are switched off
-                    X, Y, _ = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4)
-                Xp, Yp = 0.02 * X, 0.02 * Y
-
+                    Xp, Yp, _ = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4)
+                
             if SHOW_WIDTH_VALIDITY_BAND_0p1:
                 # raw X, Y: compute_width_ratio's fvec3/MHDO already encode the
                 # raw -> physical conversion internally
