@@ -23,7 +23,7 @@ CACHE_DIR = "contour_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 
-def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.0, force_recompute=False):
+def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, force_recompute=False):
     cache_file = os.path.join(
         CACHE_DIR,
         f"contour_{var}_m{mass}_n{n_points}_k{kfactor:.3f}_"
@@ -143,7 +143,7 @@ def main():
     AXIS_SCALE = 'log'
     LOG_AXIS_MIN = 1e-2  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
 
-    mass_points = [500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]  # , 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000
+    mass_points = [3000]  # 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 
 
     # First entry is the reference case; further entries are outline-only
     # contours with the next linestyle, same color as their mass.
@@ -163,11 +163,11 @@ def main():
         g3g_range = (0, 1000)
         g3gamma_range = (0, 1000)
         if var == "deltaphi_ll":
-            n_points = 100
+            n_points = 0
             chi2_68 = chi2.ppf(0.68, df=6)
             chi2_95 = chi2.ppf(0.95, df=6)
         else:
-            n_points = 300
+            n_points = 0
             chi2_68 = chi2.ppf(0.68, df=1)
             chi2_95 = chi2.ppf(0.95, df=1)
 

@@ -166,6 +166,50 @@ class ComputeLimit:
     #     return G3g, G3gamma, Chi2Grid
 
 
+    # Add this function before the ComputeLimit class or at the top of compute_limit.py
+    def create_nonuniform_points(self, start, end, breakpoints, spacings):
+        """
+        Creates non-uniform grid points with different spacings in different regions.
+        
+        Args:
+            start: Starting value
+            end: Ending value
+            breakpoints: List of breakpoints where spacing changes
+            spacings: List of spacings for each region (must be one more than breakpoints)
+        
+        Returns:
+            numpy array of grid points
+        """
+        points = []
+        current = start
+        
+        # Handle each region
+        for i in range(len(breakpoints) + 1):
+            if i == 0:
+                region_end = breakpoints[0]
+            elif i == len(breakpoints):
+                region_end = end
+            else:
+                region_end = breakpoints[i]
+            
+            spacing = spacings[i]
+            
+            # Generate points in this region
+            while current <= region_end:
+                points.append(current)
+                current += spacing
+                if current > region_end:
+                    break
+            
+            # Set current to region_end for next region
+            current = region_end
+        
+        # Ensure we have the end point
+        if points[-1] != end:
+            points.append(end)
+        
+        return np.array(points)
+    
     def find_contour(self, g3g_range=(0, 10), g3gamma_range=(0, 10), n_points=200,
                       n_jobs=-1, verbose=5):
         """
@@ -188,8 +232,19 @@ class ComputeLimit:
         Returns:
             tuple: (X, Y, Z) meshgrid arrays and the chi2 values on the grid.
         """
-        g3g_vals = np.linspace(g3g_range[0], g3g_range[1], n_points)
-        g3gamma_vals = np.linspace(g3gamma_range[0], g3gamma_range[1], n_points)
+        # g3g_vals = np.linspace(g3g_range[0], g3g_range[1], n_points)
+        # g3gamma_vals = np.linspace(g3gamma_range[0], g3gamma_range[1], n_points)
+        # Define breakpoints and spacings for non-uniform grid
+        breakpoints = [20, 100]  # Where spacing changes
+        spacings = [0.5, 1.0, 5.0]  # Spacing in each region: 0-20, 20-100, 100-end
+        
+        g3g_vals = self.create_nonuniform_points(
+            g3g_range[0], g3g_range[1], breakpoints, spacings
+        )
+        g3gamma_vals = self.create_nonuniform_points(
+            g3gamma_range[0], g3gamma_range[1], breakpoints, spacings
+        )
+        
         G3g, G3gamma = np.meshgrid(g3g_vals, g3gamma_vals)
 
         # Build the flat list of (i, j, g3g_val, g3gamma_val) tasks up front so
