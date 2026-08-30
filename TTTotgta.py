@@ -10,7 +10,7 @@ from object_selector import ObjectSelector
 from event_selector import EventSelector
 from fileset import *
 
-fileset = fileset_test
+fileset = fileset
 
 class TTPairTotatg(processor.ProcessorABC):
     
