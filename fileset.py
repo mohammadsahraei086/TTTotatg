@@ -178,7 +178,7 @@ fileset = {
     },
     "ttaa_500": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa750/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa500/Events/run_01/tag_1_delphes_events.root"
         },
         "metadata":{
             "xsec": 0.01989,
@@ -187,7 +187,7 @@ fileset = {
     },
     "ttaa_750": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa500/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa750/Events/run_01/tag_1_delphes_events.root"
         },
         "metadata":{
             "xsec": 0.001738,
