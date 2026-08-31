@@ -10,6 +10,7 @@ from coffea.util import load
 
 from histogram_plotter import create_CMS_histograms, cms_color
 
+
 class HistogramXSecPlotter:
     def __init__(self, output):
         self.output = output
@@ -109,9 +110,7 @@ class HistogramXSecPlotter:
             )
             self.data_values = self.data_values / data_norm
 
-            # theory unc. is drawn as a band around MG5+PYTHIA8, so it must be
-            # propagated using MG5+PYTHIA8's own normalization, evaluated
-            # before MG5+PYTHIA8 itself gets normalized below.
+            
             mc_norm = np.sum(self.mc_values["MG5+PYTHIA8"] * self.bin_widths)
             self.errors["theory unc."] = self._propagate_normalized_error(
                 self.mc_values["MG5+PYTHIA8"], self.errors["theory unc."], self.bin_widths, norm=mc_norm
@@ -133,9 +132,19 @@ class HistogramXSecPlotter:
                 self.signal_components[signal]["total_up"] = up
                 self.signal_components[signal]["total_down"] = down
                 
-        self.colors = [cms_color["orange"], cms_color["purple"], cms_color["red"], cms_color["beige"], cms_color["blue"], cms_color["dark_gray"],]
+        self.colors = ['#D55E00', '#0072B2', cms_color["red"], '#009E73', cms_color["blue"], cms_color["dark_gray"],]
                 
     def define_figure(self):
+        plt.rcParams.update({
+            'font.family': 'Times New Roman',      # controls all normal text
+            'mathtext.fontset': 'custom',          # 'stix'/'stixsans' etc. ignore
+            'mathtext.rm': 'Times New Roman',      # roman (upright) math text
+            'mathtext.it': 'Times New Roman:italic',  # italic math text
+            'mathtext.bf': 'Times New Roman:bold',    # bold math text
+            'font.size': 12,
+            'axes.labelsize': 16,
+            'axes.titlesize': 16,
+        })
         self.fig, (self.ax, self.rax) = plt.subplots(
             2, 1, figsize=(10, 8), 
             gridspec_kw={"height_ratios": [3, 1], "hspace": 0.0}, 
@@ -163,7 +172,7 @@ class HistogramXSecPlotter:
             values = self.signal_components[signal]["nominal"]
             self.ax.step(
                 self.bins, np.append(values, values[-1]), where='post',
-                alpha=1, linestyle="-", label=f"$M_{{T}}={mass}$", color=self.colors[i], linewidth=2
+                alpha=1, label=f"$m_{{T}}={mass}$ GeV", color=self.colors[i], linewidth=2
             )
         
         lower = self.mc_values["MG5+PYTHIA8"] - self.errors["theory unc."]
@@ -187,10 +196,6 @@ class HistogramXSecPlotter:
                 edgecolor=self.colors[i], linewidth=0
             )
         
-        # cats = {"emu": "$e\mu$", "ee": "$ee$", "mumu": "$\mu\mu$"}
-        # self.ax.text(0.75, 0.45, cats[channel], transform=self.ax.transAxes, 
-        #        fontsize=20, fontweight='bold', va='top')
-        
         if hist_name == "diff_xsec_photon_pt":
             if normalize == True:
                 self.ax.set_ylabel('1/$\sigma$ d$\sigma$/d$p_T$($\gamma$) [1/GeV]', fontsize=20)
@@ -199,27 +204,18 @@ class HistogramXSecPlotter:
         else:
             self.ax.set_ylabel(f'1/$\sigma$ d$\sigma$/d{self.x_axis_name}', fontsize=20)
         self.ax.minorticks_on()
-        self.ax.legend(fontsize=14)
-        self.ax.grid(True, alpha=0.3)
+        self.ax.legend(ncol=1, loc='upper right', fontsize=14,
+                                 bbox_to_anchor=(0.97, 0.96),
+                                 frameon=True, fancybox=True,
+                                 framealpha=0.7, edgecolor="gray", borderpad=0.6)
+        self.ax.grid(True, which='major', linestyle='-', linewidth=0.7, alpha=0.3)
         
-        self.ax.tick_params(axis='both', which='major', labelsize=14, width=2, length=8)
-        self.ax.tick_params(axis='both', which='minor', width=1.5, length=4)
+        self.ax.tick_params(axis='both', which='minor', length=3)
+        self.ax.tick_params(axis='both', which='major', length=7)
+        self.ax.tick_params(axis='both', which='both' , top=True, right=True, direction='in', labelsize=15)
         
         for spine in self.ax.spines.values():
             spine.set_linewidth(2) 
-        # if normalize:
-        #     self.ax.set_title(f'Normalized differential cross section/{self.x_axis_name}', fontsize=16)
-        # else:
-        #     self.ax.set_title(f'Differential cross section/{self.x_axis_name}', fontsize=16)
-        
-#         current_ymax = self.ax.get_ylim()[1]  # Get current upper limit
-#         self.ax.set_ylim(bottom=0, top=current_ymax) 
-        
-#         yticks = self.ax.get_yticks()
-#         yticklabels = [str(label) for label in yticks]
-#         print(yticks, "#", yticklabels)
-#         yticklabels[0] = ""
-#         self.ax.set_yticklabels(yticklabels)
         
         
         self.ax.text(0.98, 1.02, '138 $fb^{-1}$ [13 TeV]', 
@@ -265,11 +261,14 @@ class HistogramXSecPlotter:
         self.rax.set_ylim(0.5, 1.4)
         self.rax.set_xlim(self.bins[0], self.bins[-1])
         self.rax.minorticks_on()
-        self.rax.grid(True, alpha=0.3)
+        self.rax.grid(True, which='major', linestyle='-', linewidth=0.7, alpha=0.3)
         self.rax.set_xlim(self.ax.get_xlim())
         
-        self.rax.tick_params(axis='both', which='major', labelsize=14, width=2, length=8)
-        self.rax.tick_params(axis='both', which='minor', width=1.5, length=4)
+        # self.rax.tick_params(axis='both', which='major', labelsize=14, width=2, length=8)
+        # self.rax.tick_params(axis='both', which='minor', width=1.5, length=4)
+        self.rax.tick_params(axis='both', which='minor', length=3)
+        self.rax.tick_params(axis='both', which='major', length=7)
+        self.rax.tick_params(axis='both', which='both' , top=True, right=True, direction='in', labelsize=15)
         
         for spine in self.rax.spines.values():
             spine.set_linewidth(2) 
@@ -291,8 +290,9 @@ class HistogramXSecPlotter:
         self.define_figure()
         self.plot_datamc(signals, hist_name, normalize)
         self.plot_ratio()
+        plt.tight_layout()
         plt.savefig(f"plots/{name}.png", dpi=300, bbox_inches="tight")
-        # plt.savefig(f"plots/{name}.pdf", bbox_inches="tight")
+        plt.savefig(f"plots/{name}.pdf", bbox_inches="tight")
         plt.close()
         
         

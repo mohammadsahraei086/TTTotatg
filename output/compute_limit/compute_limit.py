@@ -236,7 +236,7 @@ class ComputeLimit:
         # g3gamma_vals = np.linspace(g3gamma_range[0], g3gamma_range[1], n_points)
         # Define breakpoints and spacings for non-uniform grid
         breakpoints = [20, 100]  # Where spacing changes
-        spacings = [0.5, 1.0, 5.0]  # Spacing in each region: 0-20, 20-100, 100-end
+        spacings = [0.4, 1.0, 4.0]  # Spacing in each region: 0-20, 20-100, 100-end
         
         g3g_vals = self.create_nonuniform_points(
             g3g_range[0], g3g_range[1], breakpoints, spacings

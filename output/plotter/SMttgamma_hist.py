@@ -72,9 +72,19 @@ class HistogramXSecPlotter:
                 if not "MG5" in signal and signal != "errors" and (signal != "Observed"):
                     self.signal_components[signal] = self.signal_components[signal]/(np.sum(self.signal_components[signal]*self.bin_widths))
                 
-        self.colors = [cms_color["orange"], cms_color["purple"], cms_color["red"], cms_color["beige"], cms_color["blue"], cms_color["dark_gray"],]
+        self.colors = ['#D55E00', '#0072B2', cms_color["red"], '#009E73', cms_color["blue"], cms_color["dark_gray"],]
                 
     def define_figure(self):
+        plt.rcParams.update({
+            'font.family': 'Times New Roman',      # controls all normal text
+            'mathtext.fontset': 'custom',          # 'stix'/'stixsans' etc. ignore
+            'mathtext.rm': 'Times New Roman',      # roman (upright) math text
+            'mathtext.it': 'Times New Roman:italic',  # italic math text
+            'mathtext.bf': 'Times New Roman:bold',    # bold math text
+            'font.size': 12,
+            'axes.labelsize': 16,
+            'axes.titlesize': 16,
+        })
         self.fig, (self.ax, self.rax) = plt.subplots(
             2, 1, figsize=(10, 8), 
             gridspec_kw={"height_ratios": [3, 1], "hspace": 0.0}, 
@@ -84,7 +94,7 @@ class HistogramXSecPlotter:
     def plot_datamc(self, signals, hist_name, normalize):
         self.ax.step(
             self.bins, np.append(self.mc_values["MG5+PYTHIA8"], self.mc_values["MG5+PYTHIA8"][-1]), where='post',
-            alpha=0.8, label="MG5+PYTHIA8", color="black", linewidth=2
+            alpha=0.8, label=r"$t\bar{t}\gamma$ (CMS Sample)", color="black", linewidth=2
         )
         # self.ax.step(
         #     self.bins, np.append(self.mc_values["MG5+HERWIG7"],self.mc_values["MG5+HERWIG7"][-1]), where='post',
@@ -101,7 +111,7 @@ class HistogramXSecPlotter:
             values = self.signal_components[signal]
             self.ax.step(
                 self.bins, np.append(values, values[-1]), where='post',
-                alpha=1, linestyle="-", label="MG5+PYTHIA+Delphes", color=self.colors[i], linewidth=2
+                alpha=1, linestyle="-", label=r"$t\bar{t}\gamma$ (Private Sample)", color=self.colors[i], linewidth=2
             )
         
         lower = self.mc_values["MG5+PYTHIA8"] - self.errors["theory unc."]
@@ -126,11 +136,11 @@ class HistogramXSecPlotter:
         else:
             self.ax.set_ylabel(f'1/$\sigma$ d$\sigma$/d{self.x_axis_name}', fontsize=20)
         self.ax.minorticks_on()
+        self.ax.grid(True, which='major', linestyle='-', linewidth=0.7, alpha=0.3)
         
-        self.ax.grid(True, alpha=0.3)
-        
-        self.ax.tick_params(axis='both', which='major', labelsize=14, width=2, length=8)
-        self.ax.tick_params(axis='both', which='minor', width=1.5, length=4)
+        self.ax.tick_params(axis='both', which='minor', length=3)
+        self.ax.tick_params(axis='both', which='major', length=7)
+        self.ax.tick_params(axis='both', which='both' , top=True, right=True, direction='in', labelsize=15)
         
         for spine in self.ax.spines.values():
             spine.set_linewidth(2) 
@@ -157,8 +167,12 @@ class HistogramXSecPlotter:
         labels.append(chi2_label)
 
         # Create legend with all entries including chi2
-        self.ax.legend(handles=handles, labels=labels, title="tt$\gamma$", 
-                       title_fontsize=18, fontsize=14)
+        # self.ax.legend(labels=labels, title="tt$\gamma$", 
+        #                title_fontsize=18, fontsize=14)
+        self.ax.legend(handles=handles, labels=labels, ncol=1, loc='upper right', fontsize=14,
+                                 bbox_to_anchor=(0.97, 0.96),
+                                 frameon=True, fancybox=True,
+                                 framealpha=0.7, edgecolor="gray", borderpad=0.6)
         
         # self.ax.text(0.5, 0.8, f'$\\frac{{Xi^2}}{{DoF}} = {chi2_per_dof:.2f}$', 
         #         transform=self.ax.transAxes,  # Use axes coordinates (0 to 1)
@@ -216,14 +230,12 @@ class HistogramXSecPlotter:
         self.rax.grid(True, alpha=0.3)
         self.rax.set_xlim(self.ax.get_xlim())
         
-        self.rax.tick_params(axis='both', which='major', labelsize=14, width=2, length=8)
-        self.rax.tick_params(axis='both', which='minor', width=1.5, length=4)
+        self.rax.tick_params(axis='both', which='minor', length=3)
+        self.rax.tick_params(axis='both', which='major', length=7)
+        self.rax.tick_params(axis='both', which='both' , top=True, right=True, direction='in', labelsize=15)
         
         for spine in self.rax.spines.values():
             spine.set_linewidth(2) 
-
-        # Add bin edges as x-ticks
-        # ax_bottom.set_xticks(bins)
 
             
     def plot_histograms(self, hist_info, hist_name, signal=[], normalize=False):
@@ -236,8 +248,9 @@ class HistogramXSecPlotter:
         self.define_figure()
         self.plot_datamc(signal, hist_name, normalize)
         self.plot_ratio()
+        plt.tight_layout()
         plt.savefig(f"plots/{name}.png", dpi=300, bbox_inches="tight")
-        # plt.savefig(f"plots/{name}.pdf", bbox_inches="tight")
+        plt.savefig(f"plots/{name}.pdf", bbox_inches="tight")
         plt.close()
 
 
