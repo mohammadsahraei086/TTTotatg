@@ -19,18 +19,18 @@ def _profile_worker(compute_limit_obj, g3g_val, g3gamma_val):
 
 
 class ComputeLimit:
-    def __init__(self, mass, var, in_br=False, kfactor=1.0):
+    def __init__(self, mass, var, in_br=False, kfactor=1.0, hl_lhc = False):
         self.in_br = in_br
         self.mass = mass
         self.var = var
         self.kfactor = kfactor
-
+        
         self.width_factor = width_prefactor(mass)
         self.width_wb = gen_val[f"Signal_{mass}"]["width_wb"]
 
         self.a0, self.a1, self.a2 = xsec_factors(mass)
 
-        self.V_inv = HepDataParser().get_inverse_covariance_matrix(self.var, from_bin=5)
+        self.V_inv = HepDataParser().get_inverse_covariance_matrix(self.var, from_bin=5, hl_lhc=hl_lhc)
 
         self.acceptance_gamma, self.acceptance_gammagamma, self.nuisance_deltas = generation_info(mass, var, from_bin=6)
         self.nuisance_names = list(self.nuisance_deltas.keys())

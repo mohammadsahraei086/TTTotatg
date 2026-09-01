@@ -172,22 +172,25 @@ class HepDataParser:
         return corr_matrix
 
     @staticmethod
-    def build_covariance_matrix(errors, correlation_matrix):
+    def build_covariance_matrix(errors, correlation_matrix, hl_lhc=False):
         n_bins = len(errors)
         covariance_matrix = np.zeros((n_bins, n_bins))
 
         for i in range(n_bins):
             for j in range(n_bins):
-                covariance_matrix[i, j] = errors[i] * errors[j] * correlation_matrix[i, j]
+                if hl_lhc:
+                    covariance_matrix[i, j] = errors[i] * errors[j] * correlation_matrix[i, j] * (138.0/3000.0)
+                else:
+                    covariance_matrix[i, j] = errors[i] * errors[j] * correlation_matrix[i, j]
 
         return covariance_matrix
 
-    def get_inverse_covariance_matrix(self, var, from_bin=4):
+    def get_inverse_covariance_matrix(self, var, from_bin=4, hl_lhc=False):
         data = HepDataParser.parse_cross_section(f"json_files/{var}.json", from_bin)
         bins = data['bins']
         corr_stat = HepDataParser.parse_correlation_matrix("json_files/stat_corr_pt.json", bins)
         corr_syst = HepDataParser.parse_correlation_matrix("json_files/syst_corr_pt.json", bins)
-        V_stat = HepDataParser.build_covariance_matrix(data['stat_errors'], corr_stat)
+        V_stat = HepDataParser.build_covariance_matrix(data['stat_errors'], corr_stat, hl_lhc=hl_lhc)
         V_syst = HepDataParser.build_covariance_matrix(data['syst_errors'], corr_syst)
 
         V = V_stat + V_syst

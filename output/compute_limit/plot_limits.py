@@ -19,11 +19,12 @@ from coffea.util import load
 # one happens to exist, but nothing new gets saved). Uncomment it if that
 # was just left over from debugging.
 # ---------------------------------------------------------------------------
-CACHE_DIR = "contour_cache"
-os.makedirs(CACHE_DIR, exist_ok=True)
 
-
-def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, force_recompute=False):
+def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = False, force_recompute=False):
+    CACHE_DIR = "contour_cache"
+    if hl_lhc:
+        CACHE_DIR = "hl_lhc_" + CACHE_DIR
+    os.makedirs(CACHE_DIR, exist_ok=True)
     cache_file = os.path.join(
         CACHE_DIR,
         f"contour_{var}_m{mass}_n{n_points}_k{kfactor:.3f}_"
@@ -36,7 +37,7 @@ def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, forc
         return data["X"], data["Y"], data["Z"]
 
     print(f"No cache found for mass {mass}, k={kfactor} -- computing (this is the slow part)...")
-    compute_limit = ComputeLimit(mass, var, kfactor=kfactor)
+    compute_limit = ComputeLimit(mass, var, kfactor=kfactor, hl_lhc=hl_lhc)
     X, Y, Z = compute_limit.find_contour(
         g3g_range=g3g_range, g3gamma_range=g3gamma_range, n_points=n_points
     )
@@ -145,11 +146,11 @@ def main():
     })
 
     
-    
-    SHOW_KFACTOR_CONTOURS = False
+    HL_LHC = True
+    LHC = False
     SHOW_WIDTH_VALIDITY_BAND_0p1 = False
-    SHOW_WIDTH_VALIDITY_BAND_0p3 = True
-    SHOW_EFT_VALIDITY_BOUNDARY = False
+    SHOW_WIDTH_VALIDITY_BAND_0p3 = False
+    SHOW_EFT_VALIDITY_BOUNDARY = True
 
     # 'log' or 'linear' -- switches both x and y axes together.
     AXIS_SCALE = 'log'
@@ -183,32 +184,31 @@ def main():
         mass_legend_handles = []
 
         for i, mass in enumerate(mass_points):
-            X = Y = None
             
-            if SHOW_KFACTOR_CONTOURS:
+            
+            if HL_LHC and LHC:
+                X = Y = None
                 
-                X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1)
-                # keep the unit conversion here (in the plotting stage), not in the cache,
-                # so the cached grid stays reusable even if you change this factor later
+
+                X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = False)
                 Xp, Yp = fvec_over_lambda * X, fvec_over_lambda * Y
 
                 # plt.contourf(Yp, Xp, Z, levels=[chi2_95, Z.max()], colors=[colors[i]], alpha=0.3)
                 plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
-                            linewidths=2, linestyles='dashed')
-                # contour_68 = plt.contour(Yp, Xp, Z, levels=[chi2_68], colors=[colors[i]], linewidths=2, linestyles='dashed')
+                            linewidths=2, linestyles='solid')
+                # contour_68 = plt.contour(Yp, Xp, Z, levels=[chi2_68], colors=[colors[i]], linewidths=2, linestyles='dashed') 
                 
-
-            X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4)
-            # non_zero_values = Z[Z != 0]
-            # print(mass, np.min(non_zero_values))
-            # keep the unit conversion here (in the plotting stage), not in the cache,
-            # so the cached grid stays reusable even if you change this factor later
-            Xp, Yp = fvec_over_lambda * X, fvec_over_lambda * Y
-
-            # plt.contourf(Yp, Xp, Z, levels=[chi2_95, Z.max()], colors=[colors[i]], alpha=0.3)
-            plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
-                        linewidths=2, linestyles='solid')
-            # contour_68 = plt.contour(Yp, Xp, Z, levels=[chi2_68], colors=[colors[i]], linewidths=2, linestyles='dashed') 
+                X_hl, Y_hl, Z_hl = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = True)
+                Xp_hl, Yp_hl = fvec_over_lambda * X, fvec_over_lambda * Y
+                plt.contour(Yp_hl, Xp_hl, Z_hl, levels=[chi2_95], colors=[colors[i]],
+                            linewidths=2, linestyles='solid')
+                
+            else:
+                X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = HL_LHC)
+                Xp, Yp = fvec_over_lambda * X, fvec_over_lambda * Y
+                plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
+                            linewidths=2, linestyles='solid')
+                
             
 
             if SHOW_WIDTH_VALIDITY_BAND_0p1:
@@ -233,14 +233,6 @@ def main():
 
             patch = Line2D([0], [0], color=colors[i], lw=2, label=fr'$m_T = {mass:.0f}\ \mathrm{{GeV}}$')
             mass_legend_handles.append(patch)
-
-        if SHOW_KFACTOR_CONTOURS:
-            mass_legend_handles.append(Line2D([0], [0],
-                                              color="black",
-                                              lw=2,
-                                              linestyle='dashed',
-                                              label=fr'$K-factor = 1$')
-                                      )
 
         if SHOW_WIDTH_VALIDITY_BAND_0p1:
             mass_legend_handles.append(Line2D([0], [0],
