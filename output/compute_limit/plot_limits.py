@@ -146,11 +146,11 @@ def main():
     })
 
     
-    HL_LHC = True
-    LHC = False
+    HL_LHC = False
+    LHC = True
     SHOW_WIDTH_VALIDITY_BAND_0p1 = False
     SHOW_WIDTH_VALIDITY_BAND_0p3 = False
-    SHOW_EFT_VALIDITY_BOUNDARY = True
+    SHOW_EFT_VALIDITY_BOUNDARY = False
 
     # 'log' or 'linear' -- switches both x and y axes together.
     AXIS_SCALE = 'log'
@@ -181,6 +181,7 @@ def main():
                             , '#BDB76B', '#F0E442', '#9400D3' , '#CC79A7' , '#708090', '#DA70D6',
                             '#800000']
         plt.figure(figsize=(10, 8))
+        ax = plt.gca()
         mass_legend_handles = []
 
         for i, mass in enumerate(mass_points):
@@ -201,13 +202,43 @@ def main():
                 X_hl, Y_hl, Z_hl = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = True)
                 Xp_hl, Yp_hl = fvec_over_lambda * X, fvec_over_lambda * Y
                 plt.contour(Yp_hl, Xp_hl, Z_hl, levels=[chi2_95], colors=[colors[i]],
-                            linewidths=2, linestyles='solid')
+                            linewidths=2, linestyles='dashed')
                 
             else:
                 X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = HL_LHC)
                 Xp, Yp = fvec_over_lambda * X, fvec_over_lambda * Y
                 plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
                             linewidths=2, linestyles='solid')
+                if HL_LHC:
+                    ax.text(
+                        0.8, 1.03,
+                        r'$\mathbf{\mathcal{L} = 3000\ fb^{-1}}$',
+                        transform=ax.transAxes,
+                        fontsize=16,
+                        ha='left',
+                        va='bottom',
+                        bbox=dict(
+                            boxstyle='round,pad=0.4',
+                            facecolor='white',
+                            edgecolor='gray',
+                            alpha=0.7
+                        )
+                    )
+                else:
+                    ax.text(
+                        0.82, 1.03,
+                        r'$\mathbf{\mathcal{L} = 138\ fb^{-1}}$',
+                        transform=ax.transAxes,
+                        fontsize=16,
+                        ha='left',
+                        va='bottom',
+                        bbox=dict(
+                            boxstyle='round,pad=0.4',
+                            facecolor='white',
+                            edgecolor='gray',
+                            alpha=0.7
+                        )
+                    )
                 
             
 
@@ -230,9 +261,18 @@ def main():
                 lambda_eff_grid = get_lambda_eff_grid(Xp, Yp)
                 plt.contour(Yp, Xp, lambda_eff_grid, levels=[mtt_max], colors=[colors[i]],
                             linewidths=2, linestyles='dashdot')
+                plt.contourf(Yp, Xp, lambda_eff_grid, levels=[mtt_max, np.max(lambda_eff_grid)], colors=[colors[i]], alpha=0.3)
 
             patch = Line2D([0], [0], color=colors[i], lw=2, label=fr'$m_T = {mass:.0f}\ \mathrm{{GeV}}$')
             mass_legend_handles.append(patch)
+
+        if HL_LHC and LHC:
+            mass_legend_handles.append(Line2D([0], [0],
+                                              color='black',
+                                              lw=2,
+                                              linestyle='dashed',
+                                              label=fr'HL-LHC (3000 fb$^{{-1}})$')
+                                      )
 
         if SHOW_WIDTH_VALIDITY_BAND_0p1:
             mass_legend_handles.append(Line2D([0], [0],
@@ -263,8 +303,7 @@ def main():
                                  bbox_to_anchor=(0.97, 0.04),
                                  frameon=True, fancybox=True,
                                  framealpha=0.7, edgecolor="gray", borderpad=0.6)
-        
-        ax = plt.gca()
+
         ax.minorticks_on()
         if AXIS_SCALE == 'log':
             ax.set_xscale('log')
@@ -317,19 +356,47 @@ def main():
                 alpha=0.7
             )
         )
-        
-        if not (SHOW_WIDTH_VALIDITY_BAND_0p1 or SHOW_WIDTH_VALIDITY_BAND_0p3 or SHOW_EFT_VALIDITY_BOUNDARY):
-            plt.savefig(f"plots/tta_untruncated_limits_{var}.png")
-            plt.savefig(f"plots/tta_untruncated_limits_{var}.pdf")
-        if SHOW_WIDTH_VALIDITY_BAND_0p1:
-            plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m.png")
-            plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m.pdf")
-        if SHOW_WIDTH_VALIDITY_BAND_0p3:
-            plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m_0p3.png")
-            plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m_0p3.pdf")
-        if SHOW_EFT_VALIDITY_BOUNDARY:
-            plt.savefig(f"plots/tta_untruncated_limits_with_EFT_validity.png")
-            plt.savefig(f"plots/tta_untruncated_limits_with_EFT_validity.pdf")
+
+        if HL_LHC and LHC:
+            if not (SHOW_WIDTH_VALIDITY_BAND_0p1 or SHOW_WIDTH_VALIDITY_BAND_0p3 or SHOW_EFT_VALIDITY_BOUNDARY):
+                plt.savefig(f"plots/tta_untruncated_limits_{var}.png")
+                plt.savefig(f"plots/tta_untruncated_limits_{var}.pdf")
+            if SHOW_WIDTH_VALIDITY_BAND_0p1:
+                plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m.png")
+                plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m.pdf")
+            if SHOW_WIDTH_VALIDITY_BAND_0p3:
+                plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m_0p3.png")
+                plt.savefig(f"plots/tta_untruncated_limits_with_Gamma_over_m_0p3.pdf")
+            if SHOW_EFT_VALIDITY_BOUNDARY:
+                plt.savefig(f"plots/tta_untruncated_limits_with_EFT_validity.png")
+                plt.savefig(f"plots/tta_untruncated_limits_with_EFT_validity.pdf")
+        elif HL_LHC:
+            if not (SHOW_WIDTH_VALIDITY_BAND_0p1 or SHOW_WIDTH_VALIDITY_BAND_0p3 or SHOW_EFT_VALIDITY_BOUNDARY):
+                plt.savefig(f"hl_plots/tta_untruncated_limits_{var}.png")
+                plt.savefig(f"hl_plots/tta_untruncated_limits_{var}.pdf")
+            if SHOW_WIDTH_VALIDITY_BAND_0p1:
+                plt.savefig(f"hl_plots/tta_untruncated_limits_with_Gamma_over_m.png")
+                plt.savefig(f"hl_plots/tta_untruncated_limits_with_Gamma_over_m.pdf")
+            if SHOW_WIDTH_VALIDITY_BAND_0p3:
+                plt.savefig(f"hl_plots/tta_untruncated_limits_with_Gamma_over_m_0p3.png")
+                plt.savefig(f"hl_plots/tta_untruncated_limits_with_Gamma_over_m_0p3.pdf")
+            if SHOW_EFT_VALIDITY_BOUNDARY:
+                plt.savefig(f"hl_plots/tta_untruncated_limits_with_EFT_validity.png")
+                plt.savefig(f"hl_plots/tta_untruncated_limits_with_EFT_validity.pdf")
+        else:
+            if not (SHOW_WIDTH_VALIDITY_BAND_0p1 or SHOW_WIDTH_VALIDITY_BAND_0p3 or SHOW_EFT_VALIDITY_BOUNDARY):
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_{var}.png")
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_{var}.pdf")
+            if SHOW_WIDTH_VALIDITY_BAND_0p1:
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_with_Gamma_over_m.png")
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_with_Gamma_over_m.pdf")
+            if SHOW_WIDTH_VALIDITY_BAND_0p3:
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_with_Gamma_over_m_0p3.png")
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_with_Gamma_over_m_0p3.pdf")
+            if SHOW_EFT_VALIDITY_BOUNDARY:
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_with_EFT_validity.png")
+                plt.savefig(f"lhc_plots/tta_untruncated_limits_with_EFT_validity.pdf")
+            
 
 if __name__ == "__main__":
     main()

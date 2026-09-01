@@ -30,9 +30,9 @@ class ComputeLimit:
 
         self.a0, self.a1, self.a2 = xsec_factors(mass)
 
-        self.V_inv = HepDataParser().get_inverse_covariance_matrix(self.var, from_bin=5, hl_lhc=hl_lhc)
+        self.V_inv = HepDataParser().get_inverse_covariance_matrix(self.var, from_bin=3, hl_lhc=hl_lhc)
 
-        self.acceptance_gamma, self.acceptance_gammagamma, self.nuisance_deltas = generation_info(mass, var, from_bin=6)
+        self.acceptance_gamma, self.acceptance_gammagamma, self.nuisance_deltas = generation_info(mass, var, from_bin=4)
         self.nuisance_names = list(self.nuisance_deltas.keys())
 
     def compute_branching_ratios(self, g3g, g3gamma):
