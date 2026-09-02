@@ -147,10 +147,10 @@ def main():
 
     
     HL_LHC = True
-    LHC = True
+    LHC = False
     SHOW_WIDTH_VALIDITY_BAND_0p1 = False
     SHOW_WIDTH_VALIDITY_BAND_0p3 = False
-    SHOW_EFT_VALIDITY_BOUNDARY = False
+    SHOW_EFT_VALIDITY_BOUNDARY = True
 
     # 'log' or 'linear' -- switches both x and y axes together.
     AXIS_SCALE = 'log'
