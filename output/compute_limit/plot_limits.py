@@ -146,7 +146,7 @@ def main():
     })
 
     
-    HL_LHC = False
+    HL_LHC = True
     LHC = True
     SHOW_WIDTH_VALIDITY_BAND_0p1 = False
     SHOW_WIDTH_VALIDITY_BAND_0p3 = False
