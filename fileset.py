@@ -159,11 +159,12 @@ fileset = {
     },
     "Signal_3000": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/3000/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/3000/Events/run_01/tag_1_delphes_events.root",
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/3000/Events/run_02/tag_1_delphes_events.root"
         },
         "metadata":{
             "xsec": 2.982e-09,
-            "nevents": 100000,
+            "nevents": 200000,
             "mass": 3000
         }
     },
@@ -259,11 +260,12 @@ fileset = {
     },
     "ttaa_3000": {
         "files": {
-            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa3000/Events/run_01/tag_1_delphes_events.root"
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa3000/Events/run_01/tag_1_delphes_events.root",
+            "/home/mohammad/Softwares/MG5_aMC_v3_5_12/my_samples/TTtotatg/ttaa3000/Events/run_02/tag_1_delphes_events.root"
         },
         "metadata":{
             "xsec": 1.089e-09,
-            "nevents": 50000
+            "nevents": 200000
         }
     },
 }

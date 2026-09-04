@@ -37,9 +37,9 @@ class EventSelector:
 
         if not "SM" in self.events.metadata["dataset"]:
             self.define_variables_before_selection(self.events)
-            lambda_eff = 7071 # 1/sqrt(c_tg^2+c_tgamma^2)
-            cutflow["yield"]["eft_val_total"] = len(self.events[self.events.TTbarMass < lambda_eff])*weight
-            cutflow["nevents"]["eft_val_total"] = len(self.events[self.events.TTbarMass < lambda_eff])
+            # lambda_eff = 7071 # 1/sqrt(c_tg^2+c_tgamma^2)
+            # cutflow["yield"]["eft_val_total"] = len(self.events[self.events.TTbarMass < lambda_eff])*weight
+            # cutflow["nevents"]["eft_val_total"] = len(self.events[self.events.TTbarMass < lambda_eff])
 
         selected_events = self.select_two_lep_events()
         cutflow["yield"]["n_lep=2"] = len(selected_events)*weight
@@ -50,8 +50,8 @@ class EventSelector:
         selection.add("lepInvariantMass", (selected_events.GoodLeptons[:, 0] + selected_events.GoodLeptons[:, 1]).mass > 20)
         selection.add("onePhoton", selected_events.nGoodPhotons == 1)
         selection.add("atLeastOneBJet", selected_events.nGoodBJets >= 1)
-        if not "SM" in self.events.metadata["dataset"]:
-            selection.add("eft_val", selected_events.TTbarMass < lambda_eff)
+        # if not "SM" in self.events.metadata["dataset"]:
+        #     selection.add("eft_val", selected_events.TTbarMass < lambda_eff)
 
         mask = ak.Array([True] * len(selected_events))
         for name in selection.names:
@@ -65,21 +65,24 @@ class EventSelector:
         # selection.add("ee", (selected_events.GoodLeptons.flavor[:, 0] == "e") & (selected_events.GoodLeptons.flavor[:, 1]=="e"))
         # selection.add("mumu", (selected_events.GoodLeptons.flavor[:, 0] == "mu") & (selected_events.GoodLeptons.flavor[:, 1]=="mu"))
         
-        selected_before_MTT = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
-        MTT_array = column_accumulator(ak.to_numpy(selected_before_MTT.TTbarMass))
-        if channel=="total":
-            if not "SM" in self.events.metadata["dataset"]:
-                selected_before_MTT = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
-                selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", "eft_val")]
-                MTT_array = column_accumulator(ak.to_numpy(selected_before_MTT.TTbarMass))
-            else:
-                selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
-        else:
-            if not "SM" in self.events.metadata["dataset"]:
-                selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", f"{channel}", "eft_val")]
-            else:
-                selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", f"{channel}")]
-            cutflow["yield"][channel] = ak.sum(mask & selection.all(channel))*weight
-            cutflow["nevents"][channel] = ak.sum(mask & selection.all(channel))                
+        selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
+        arrays = {
+            "MTT_array": column_accumulator(ak.to_numpy(selected_events.TTbarMass)),
+            "photon_pt": column_accumulator(ak.to_numpy(selected_events.GoodPhotons.pt))
+        }
+        # if channel=="total":
+        #     if not "SM" in self.events.metadata["dataset"]:
+        #         selected_before_MTT = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
+        #         selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", "eft_val")]
+        #         MTT_array = column_accumulator(ak.to_numpy(selected_before_MTT.TTbarMass))
+        #     else:
+        #         selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet")]
+        # else:
+        #     if not "SM" in self.events.metadata["dataset"]:
+        #         selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", f"{channel}", "eft_val")]
+        #     else:
+        #         selected_events = selected_events[selection.all("leadingLepPT", "OCLep", "lepInvariantMass", "onePhoton", "atLeastOneBJet", f"{channel}")]
+        #     cutflow["yield"][channel] = ak.sum(mask & selection.all(channel))*weight
+        #     cutflow["nevents"][channel] = ak.sum(mask & selection.all(channel))                
 
-        return selected_events, cutflow, MTT_array
+        return selected_events, cutflow, arrays

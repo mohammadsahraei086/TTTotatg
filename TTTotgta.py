@@ -10,7 +10,7 @@ from object_selector import ObjectSelector
 from event_selector import EventSelector
 from fileset import *
 
-fileset = fileset
+fileset = fileset_test
 
 class TTPairTotatg(processor.ProcessorABC):
     
@@ -26,7 +26,7 @@ class TTPairTotatg(processor.ProcessorABC):
         output["metadata"] = {}
         output["cutflow"] = {}
         output["hists"] = {}
-        output["MTT_array"] = {}
+        output["arrays"] = {}
         
         for cat in self.categories:
             output["cutflow"][cat] = {}
@@ -48,9 +48,9 @@ class TTPairTotatg(processor.ProcessorABC):
         event_selector = EventSelector(self.events)
 
         for cat in self.categories:
-            selected_events, cutflow, MTT_array = event_selector.select_good_events(cat)
+            selected_events, cutflow, arrays = event_selector.select_good_events(cat)
             self.output["cutflow"][cat][dataset] = cutflow
-            self.output["MTT_array"][dataset] = MTT_array
+            self.output["arrays"][dataset] = arrays
             if  len(selected_events) == 0:
                 continue
             for name, hist in self.histograms.items():

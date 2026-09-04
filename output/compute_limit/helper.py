@@ -6,9 +6,15 @@ import json
 
 gen_val = {
     "Signal_500": {
-        "g": np.array([5, 7, 9, 11, 13]),
-        "width_tg": [0.1817, 0.3563, 0.5890, 0.8798, 1.2289],
-        "xsec_TT": [2.325581e+00, 2.355341e+00, 2.431030e+00, 2.516361e+00, 2.638057e+00],
+        "g": np.array([5, 7, 9, 11, 13
+                       # , 50, 100, 200, 500, 1000]),
+                      ]),
+        "width_tg": [0.1817, 0.3563, 0.5890, 0.8798, 1.2289
+                     # , 18.179, 72.717, 290.86, 1817.93, 7271.7
+                    ],
+        "xsec_TT": [2.325581e+00, 2.355341e+00, 2.431030e+00, 2.516361e+00, 2.638057e+00
+                    # , 1.874030e+01, 2.101468e+02, 3.087370e+03, 1.177936e+05, 1.884204e+06
+                   ],
         "width_wb": 0
     },
     "Signal_750": {
@@ -108,8 +114,6 @@ def generation_info(mass, var, from_bin=5):
 
     return acceptance_gamma, acceptance_gammagamma, uncertainties
 
-import json
-import numpy as np
 class HepDataParser:
     """
     A class to parse HEPData JSON files and extract cross sections, errors,
@@ -124,22 +128,24 @@ class HepDataParser:
         with open(json_file_path, 'r') as f:
             data = json.load(f)
 
-        result = {'bins': [], 'values': [], 'stat_errors': [], 'syst_errors': []}
+        result = {'bins': [], 'values_obs': [], 'values_sm': [], 'stat_errors': [], 'syst_errors': []}
 
         for entry in data['values']:
             bin_low = entry['x'][0]['low']
             bin_high = entry['x'][0]['high']
             result['bins'].append((float(bin_low), float(bin_high)))
+            diff = float(bin_high) - float(bin_low)
 
-            result['values'].append(float(entry['y'][0]['value']))
-
+            result['values_obs'].append(float(entry['y'][0]['value'])/diff)
+            result['values_sm'].append(float(entry['y'][1]['value'])/diff)
+            
             for error in entry['y'][0]['errors']:
                 if error.get('label') == 'stat':
-                    result['stat_errors'].append(float(error['symerror']))
+                    result['stat_errors'].append(float(error['symerror'])/diff)
                 elif error.get('label') == 'syst':
-                    result['syst_errors'].append(float(error['symerror']))
+                    result['syst_errors'].append(float(error['symerror'])/diff)
 
-        for key in ['bins', 'values', 'stat_errors', 'syst_errors']:
+        for key in ['bins', 'values_obs', 'values_sm', 'stat_errors', 'syst_errors']:
             result[key] = np.array(result[key])[from_bin:]
 
         return result
@@ -172,29 +178,37 @@ class HepDataParser:
         return corr_matrix
 
     @staticmethod
-    def build_covariance_matrix(errors, correlation_matrix, hl_lhc=False):
+    def build_covariance_matrix(errors, correlation_matrix, hl_lhc=False, stat=False):
         n_bins = len(errors)
         covariance_matrix = np.zeros((n_bins, n_bins))
+        if hl_lhc:
+            if stat:
+                factor = 138.0/3000.0
+            else:
+                factor = 0.5
+        else:
+            factor = 1
 
         for i in range(n_bins):
             for j in range(n_bins):
-                if hl_lhc:
-                    covariance_matrix[i, j] = errors[i] * errors[j] * correlation_matrix[i, j] * (138.0/3000.0)
-                else:
-                    covariance_matrix[i, j] = errors[i] * errors[j] * correlation_matrix[i, j]
+                covariance_matrix[i, j] = errors[i] * errors[j] * correlation_matrix[i, j] * factor
 
         return covariance_matrix
 
-    def get_inverse_covariance_matrix(self, var, from_bin=4, hl_lhc=False):
+    def get_inverse_covariance_matrix_and_data_minus_sm(self, var, from_bin=4, hl_lhc=False):
         data = HepDataParser.parse_cross_section(f"json_files/{var}.json", from_bin)
         bins = data['bins']
         corr_stat = HepDataParser.parse_correlation_matrix("json_files/stat_corr_pt.json", bins)
         corr_syst = HepDataParser.parse_correlation_matrix("json_files/syst_corr_pt.json", bins)
-        V_stat = HepDataParser.build_covariance_matrix(data['stat_errors'], corr_stat, hl_lhc=hl_lhc)
-        V_syst = HepDataParser.build_covariance_matrix(data['syst_errors'], corr_syst)
+        V_stat = HepDataParser.build_covariance_matrix(data['stat_errors'], corr_stat, hl_lhc=hl_lhc, stat=True)
+        V_syst = HepDataParser.build_covariance_matrix(data['syst_errors'], corr_syst, hl_lhc=hl_lhc, stat=False)
 
         V = V_stat + V_syst
+        data_minus_sm = data["values_obs"] - data["values_sm"]
 
         self.V_inv = np.linalg.inv(V)
 
-        return self.V_inv
+        print("V_INV = ", self.V_inv)
+        print("data_minus_sm = ", data_minus_sm)
+
+        return self.V_inv, data_minus_sm

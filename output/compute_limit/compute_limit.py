@@ -24,13 +24,14 @@ class ComputeLimit:
         self.mass = mass
         self.var = var
         self.kfactor = kfactor
+        self.hl_lhc = hl_lhc
         
         self.width_factor = width_prefactor(mass)
         self.width_wb = gen_val[f"Signal_{mass}"]["width_wb"]
 
         self.a0, self.a1, self.a2 = xsec_factors(mass)
 
-        self.V_inv = HepDataParser().get_inverse_covariance_matrix(self.var, from_bin=3, hl_lhc=hl_lhc)
+        self.V_inv, self.data_minus_sm = HepDataParser().get_inverse_covariance_matrix_and_data_minus_sm(self.var, from_bin=3, hl_lhc=hl_lhc)
 
         self.acceptance_gamma, self.acceptance_gammagamma, self.nuisance_deltas = generation_info(mass, var, from_bin=4)
         self.nuisance_names = list(self.nuisance_deltas.keys())
@@ -65,12 +66,16 @@ class ComputeLimit:
 
             s_i(theta) = s_i^nominal * prod_k (1 + theta_k * delta_{k,i})
         """
-        xsec_TT = self.compute_xsec(g3g)
+        xsec_TT = self.compute_xsec(g3g) * 1000
         b_g, b_gamma = self.compute_branching_ratios(g3g, g3gamma)
         f1gamma = 2 * b_g * b_gamma
         f2gamma = b_gamma ** 2
 
-        s = xsec_TT * (f1gamma * self.acceptance_gamma + f2gamma * self.acceptance_gammagamma)
+        if self.hl_lhc:
+            s = xsec_TT * (f1gamma * self.acceptance_gamma + f2gamma * self.acceptance_gammagamma)
+        else:
+            s = self.data_minus_sm - xsec_TT * (f1gamma * self.acceptance_gamma + f2gamma * self.acceptance_gammagamma)
+
 
         if theta is not None:
             scale = np.ones_like(s, dtype=float)
@@ -226,17 +231,21 @@ class ComputeLimit:
                 available CPU cores. Set to 1 to fall back to the original
                 serial behaviour (e.g. for debugging).
             verbose (int): joblib verbosity (0 = silent, higher = more
-                progress output). 5 gives periodic progress updates, useful
+                progress output).  gives periodic progress updates, useful
                 given how long a full grid can take.
 
-        Returns:
+        Returns:5
             tuple: (X, Y, Z) meshgrid arrays and the chi2 values on the grid.
         """
         # g3g_vals = np.linspace(g3g_range[0], g3g_range[1], n_points)
         # g3gamma_vals = np.linspace(g3gamma_range[0], g3gamma_range[1], n_points)
         # Define breakpoints and spacings for non-uniform grid
-        breakpoints = [20, 100]  # Where spacing changes
-        spacings = [0.4, 1.0, 4.0]  # Spacing in each region: 0-20, 20-100, 100-end
+        # breakpoints = [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 10]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        # spacings = [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1, 1000] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
+        # breakpoints = [20, 100]  # Where spacing changes
+        # spacings = [0.4, 1.0, 4.0]  # Spacing in each region: 0-20, 20-100, 100-end
+        breakpoints = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        spacings = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 2e1] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
         
         g3g_vals = self.create_nonuniform_points(
             g3g_range[0], g3g_range[1], breakpoints, spacings

@@ -154,9 +154,9 @@ def main():
 
     # 'log' or 'linear' -- switches both x and y axes together.
     AXIS_SCALE = 'log'
-    LOG_AXIS_MIN = 1e-5  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
+    LOG_AXIS_MIN = 1e-11  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
 
-    mass_points = [500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]  # 
+    mass_points = [500]  # 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000
 
     # First entry is the reference case; further entries are outline-only
     # contours with the next linestyle, same color as their mass.
@@ -174,8 +174,8 @@ def main():
             chi2_95 = chi2.ppf(0.95, df=6)
         else:
             n_points = 0
-            chi2_68 = chi2.ppf(0.68, df=1)
-            chi2_95 = chi2.ppf(0.95, df=1)
+            chi2_68 = chi2.ppf(0.68, df=2)
+            chi2_95 = chi2.ppf(0.95, df=2)
 
         colors = colors = ['#D55E00', '#E69F00', '#0072B2',  '#56B4E9', '#009E73', '#90EE90'
                             , '#BDB76B', '#F0E442', '#9400D3' , '#CC79A7' , '#708090', '#DA70D6',
@@ -203,12 +203,15 @@ def main():
                 Xp_hl, Yp_hl = fvec_over_lambda * X, fvec_over_lambda * Y
                 plt.contour(Yp_hl, Xp_hl, Z_hl, levels=[chi2_95], colors=[colors[i]],
                             linewidths=2, linestyles='dashed')
-                
+
             else:
                 X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = HL_LHC)
                 Xp, Yp = fvec_over_lambda * X, fvec_over_lambda * Y
                 plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
                             linewidths=2, linestyles='solid')
+                
+                print("MIN = ", np.min(Z[Z!=0]))
+                
                 if HL_LHC:
                     ax.text(
                         0.8, 1.03,
@@ -320,6 +323,7 @@ def main():
         elif AXIS_SCALE == 'linear':
             ax.set_xscale('linear')
             ax.set_yscale('linear')
+            ax.set_xlim(right=0.00005)
             plt.axhline(0, color='black', linestyle='--', linewidth=1)
             plt.axvline(0, color='black', linestyle='--', linewidth=1)
             ax.tick_params(axis='both', which='minor', length=3)
