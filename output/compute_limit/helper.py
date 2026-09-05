@@ -3,6 +3,7 @@ import numpy as np
 from compute_uncertainties import compute_systematic_uncertainties as com_sys
 from coffea.util import load
 import json
+import hist
 
 gen_val = {
     "Signal_500": {
@@ -114,6 +115,42 @@ def generation_info(mass, var, from_bin=5):
 
     return acceptance_gamma, acceptance_gammagamma, uncertainties
 
+def _values_with_overflow(hist_obj, category, from_bin=1):
+    
+    values = hist_obj[{'category': category}].values(flow=True)
+    core = values[from_bin:-1].copy()
+    core[-1] += values[-1]
+    
+    return core
+    
+data = load("../output.coffea")
+def compute_eft_eff(mass, g3g, g3gamma, from_bin):
+    factor = 0.1/5000
+    lambda_eff = 1/np.sqrt((factor * g3g) ** 2 + (factor * g3gamma) ** 2)
+
+    eff = []
+    for smpl in ["Signal", "ttaa"]:
+        arrays = data["arrays"][f"{smpl}_{mass}"]
+        mask = arrays["MTT_array"].value < lambda_eff
+        photon_pt = arrays["photon_pt"].value.flatten()
+    
+        bins = [20., 35., 50., 70., 130., 200., 300.]
+        h = hist.Hist(
+            hist.axis.Variable(bins, name="photon_pt", label="Photon pT [GeV]"),
+            hist.axis.StrCategory(["all", "selected"], name="category", label="Category")
+            # storage=hist.storage.Weight()  # or hist.storage.Count() if no weights
+        )
+        h.fill(photon_pt=photon_pt, category="all")
+        h.fill(photon_pt=photon_pt[mask], category="selected")
+        
+        selected = _values_with_overflow(h, "selected", from_bin)
+        all_photons = _values_with_overflow(h, "all", from_bin)
+        
+        eff.append(selected/all_photons)
+    
+    return eff[0], eff[1]
+        
+
 class HepDataParser:
     """
     A class to parse HEPData JSON files and extract cross sections, errors,
@@ -134,16 +171,16 @@ class HepDataParser:
             bin_low = entry['x'][0]['low']
             bin_high = entry['x'][0]['high']
             result['bins'].append((float(bin_low), float(bin_high)))
-            diff = float(bin_high) - float(bin_low)
+            # diff = float(bin_high) - float(bin_low)
 
-            result['values_obs'].append(float(entry['y'][0]['value'])/diff)
-            result['values_sm'].append(float(entry['y'][1]['value'])/diff)
+            result['values_obs'].append(float(entry['y'][0]['value']))
+            result['values_sm'].append(float(entry['y'][1]['value']))
             
             for error in entry['y'][0]['errors']:
                 if error.get('label') == 'stat':
-                    result['stat_errors'].append(float(error['symerror'])/diff)
+                    result['stat_errors'].append(float(error['symerror']))
                 elif error.get('label') == 'syst':
-                    result['syst_errors'].append(float(error['symerror'])/diff)
+                    result['syst_errors'].append(float(error['symerror']))
 
         for key in ['bins', 'values_obs', 'values_sm', 'stat_errors', 'syst_errors']:
             result[key] = np.array(result[key])[from_bin:]

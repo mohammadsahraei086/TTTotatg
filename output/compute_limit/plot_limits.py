@@ -37,7 +37,7 @@ def get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_l
         return data["X"], data["Y"], data["Z"]
 
     print(f"No cache found for mass {mass}, k={kfactor} -- computing (this is the slow part)...")
-    compute_limit = ComputeLimit(mass, var, kfactor=kfactor, hl_lhc=hl_lhc)
+    compute_limit = ComputeLimit(mass, var, kfactor=kfactor, hl_lhc=hl_lhc, from_bin = 3)
     X, Y, Z = compute_limit.find_contour(
         g3g_range=g3g_range, g3gamma_range=g3gamma_range, n_points=n_points
     )
@@ -115,7 +115,7 @@ def get_lambda_eff_threshold(mass, output_dir="../output.coffea"):
     """Max M_TT (in TeV) found in the generated sample for this mass point."""
     try:
         output = load(output_dir)
-        MTT = np.max(output["MTT_array"][f"Signal_{mass}"].value)
+        MTT = np.max(output["arrays"][f"Signal_{mass}"]["MTT_array"].value)
         return MTT
     except (FileNotFoundError, KeyError, AttributeError) as e:
         print(f"Warning: Could not load MTT for mass {mass}: {e}")
@@ -150,11 +150,11 @@ def main():
     LHC = False
     SHOW_WIDTH_VALIDITY_BAND_0p1 = False
     SHOW_WIDTH_VALIDITY_BAND_0p3 = False
-    SHOW_EFT_VALIDITY_BOUNDARY = True
+    SHOW_EFT_VALIDITY_BOUNDARY = False
 
     # 'log' or 'linear' -- switches both x and y axes together.
     AXIS_SCALE = 'log'
-    LOG_AXIS_MIN = 1e-11  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
+    LOG_AXIS_MIN = 1e-5  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
 
     mass_points = [500]  # 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000
 
@@ -168,12 +168,16 @@ def main():
     for var in ["diff_xsec_photon_pt"]:  # , "deltaphi_ll"
         g3g_range = (0, 1100)
         g3gamma_range = (0, 1100)
+        # g3g_range = (-1100, 1100)
+        # g3gamma_range = (-1100, 1100)
+        # g3g_range = (-1e-10, 1e-10)
+        # g3gamma_range = (-1e-10, 1e-10)
         if var == "deltaphi_ll":
             n_points = 0
             chi2_68 = chi2.ppf(0.68, df=6)
             chi2_95 = chi2.ppf(0.95, df=6)
         else:
-            n_points = 0
+            n_points = 200
             chi2_68 = chi2.ppf(0.68, df=2)
             chi2_95 = chi2.ppf(0.95, df=2)
 
@@ -193,21 +197,24 @@ def main():
 
                 X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = False)
                 Xp, Yp = fvec_over_lambda * X, fvec_over_lambda * Y
+                Z_min = np.min(Z[Z!=0])
 
                 # plt.contourf(Yp, Xp, Z, levels=[chi2_95, Z.max()], colors=[colors[i]], alpha=0.3)
-                plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
+                plt.contour(Yp, Xp, Z-Z_min, levels=[chi2_95], colors=[colors[i]],
                             linewidths=2, linestyles='solid')
                 # contour_68 = plt.contour(Yp, Xp, Z, levels=[chi2_68], colors=[colors[i]], linewidths=2, linestyles='dashed') 
                 
                 X_hl, Y_hl, Z_hl = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = True)
                 Xp_hl, Yp_hl = fvec_over_lambda * X, fvec_over_lambda * Y
-                plt.contour(Yp_hl, Xp_hl, Z_hl, levels=[chi2_95], colors=[colors[i]],
+                Z_hl_min = np.min(Z_hl[Z_hl!=0])
+                plt.contour(Yp_hl, Xp_hl, Z_hl-Z_hl_min, levels=[chi2_95], colors=[colors[i]],
                             linewidths=2, linestyles='dashed')
 
             else:
                 X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = HL_LHC)
                 Xp, Yp = fvec_over_lambda * X, fvec_over_lambda * Y
-                plt.contour(Yp, Xp, Z, levels=[chi2_95], colors=[colors[i]],
+                Z_min = np.min(Z[Z!=0])
+                plt.contour(Yp, Xp, Z-Z_min, levels=[chi2_95], colors=[colors[i]],
                             linewidths=2, linestyles='solid')
                 
                 print("MIN = ", np.min(Z[Z!=0]))
@@ -302,7 +309,7 @@ def main():
                                          )
                                   )
             
-        mass_legend = plt.legend(handles=mass_legend_handles, ncol=1, loc='lower right', fontsize=10,
+        mass_legend = plt.legend(handles=mass_legend_handles, ncol=1, loc='lower right', fontsize=12,
                                  bbox_to_anchor=(0.97, 0.04),
                                  frameon=True, fancybox=True,
                                  framealpha=0.7, edgecolor="gray", borderpad=0.6)
@@ -312,6 +319,8 @@ def main():
             ax.set_xscale('log')
             ax.set_yscale('log')
             ax.set_xlim(left=LOG_AXIS_MIN, right=0.022)
+            # ax.set_xlim(left=LOG_AXIS_MIN, right=1e-157)
+            # ax.set_ylim(bottom=LOG_AXIS_MIN, top=1e-157)
             ax.set_ylim(bottom=LOG_AXIS_MIN, top=0.022)
             ax.tick_params(axis='both', which='minor', length=3)
             ax.tick_params(axis='both', which='major', length=7)
@@ -323,7 +332,8 @@ def main():
         elif AXIS_SCALE == 'linear':
             ax.set_xscale('linear')
             ax.set_yscale('linear')
-            ax.set_xlim(right=0.00005)
+            ax.set_xlim(0, 2.5e-4)
+            ax.set_ylim(0, 1e-3)
             plt.axhline(0, color='black', linestyle='--', linewidth=1)
             plt.axvline(0, color='black', linestyle='--', linewidth=1)
             ax.tick_params(axis='both', which='minor', length=3)

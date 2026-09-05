@@ -19,21 +19,22 @@ def _profile_worker(compute_limit_obj, g3g_val, g3gamma_val):
 
 
 class ComputeLimit:
-    def __init__(self, mass, var, in_br=False, kfactor=1.0, hl_lhc = False):
+    def __init__(self, mass, var, in_br=False, kfactor=1.0, from_bin=3, hl_lhc = False):
         self.in_br = in_br
         self.mass = mass
         self.var = var
         self.kfactor = kfactor
         self.hl_lhc = hl_lhc
+        self.from_bin = from_bin
         
         self.width_factor = width_prefactor(mass)
         self.width_wb = gen_val[f"Signal_{mass}"]["width_wb"]
 
         self.a0, self.a1, self.a2 = xsec_factors(mass)
 
-        self.V_inv, self.data_minus_sm = HepDataParser().get_inverse_covariance_matrix_and_data_minus_sm(self.var, from_bin=3, hl_lhc=hl_lhc)
+        self.V_inv, self.data_minus_sm = HepDataParser().get_inverse_covariance_matrix_and_data_minus_sm(self.var, from_bin=from_bin, hl_lhc=hl_lhc)
 
-        self.acceptance_gamma, self.acceptance_gammagamma, self.nuisance_deltas = generation_info(mass, var, from_bin=4)
+        self.acceptance_gamma, self.acceptance_gammagamma, self.nuisance_deltas = generation_info(mass, var, from_bin=from_bin+1)
         self.nuisance_names = list(self.nuisance_deltas.keys())
 
     def compute_branching_ratios(self, g3g, g3gamma):
@@ -48,130 +49,41 @@ class ComputeLimit:
 
         return B_g, B_gamma
 
-    def compute_xsec(self, g3g):
+    def compute_xsec(self, g3g, g3gamma):
+        
+        eft_eff1, eft_eff2 = compute_eft_eff(self.mass, g3g, g3gamma, self.from_bin+1)
+        xsec1 = self.a0 * np.ones_like(eft_eff1) * self.kfactor + self.a1 * eft_eff1 * g3g ** 2 + self.a2 * eft_eff1 * g3g ** 4
+        xsec2 = self.a0 * np.ones_like(eft_eff2) * self.kfactor + self.a1 * eft_eff2 * g3g ** 2 + self.a2 * eft_eff2 * g3g ** 4
 
-        return self.a0 * self.kfactor + self.a1 * g3g ** 2 + self.a2 * g3g ** 4
-
-    def get_signal_vector(self, g3g, g3gamma, theta=None):
-        """
-        theta: array-like, one entry per nuisance parameter in
-        self.nuisance_names (currently ["pdf", "mur", "muf"]), given in
-        units of standard deviations. theta=None (or all zeros) reproduces
-        the original, nominal signal prediction.
-
-        Each nuisance parameter shifts every bin coherently (fully
-        correlated across bins, which is the standard assumption for a
-        single PDF/scale variation), with a bin-dependent size given by
-        self.nuisance_deltas[name]:
-
-            s_i(theta) = s_i^nominal * prod_k (1 + theta_k * delta_{k,i})
-        """
-        xsec_TT = self.compute_xsec(g3g) * 1000
+        return xsec1 * 1000, xsec2* 1000
+    
+    def _compute_nominal_signal(self, g3g, g3gamma):
+        xsec1, xsec2 = self.compute_xsec(g3g, g3gamma)      # expensive: compute_eft_eff lives here
         b_g, b_gamma = self.compute_branching_ratios(g3g, g3gamma)
-        f1gamma = 2 * b_g * b_gamma
-        f2gamma = b_gamma ** 2
+        f1gamma, f2gamma = 2 * b_g * b_gamma, b_gamma ** 2
+        return xsec1 * f1gamma * self.acceptance_gamma + xsec2 * f2gamma * self.acceptance_gammagamma
 
-        if self.hl_lhc:
-            s = xsec_TT * (f1gamma * self.acceptance_gamma + f2gamma * self.acceptance_gammagamma)
+    def get_signal_vector(self, s0, theta=None):
+        if theta is None:
+            s = s0
         else:
-            s = self.data_minus_sm - xsec_TT * (f1gamma * self.acceptance_gamma + f2gamma * self.acceptance_gammagamma)
-
-
-        if theta is not None:
-            scale = np.ones_like(s, dtype=float)
+            scale = np.ones_like(s0, dtype=float)
             for name, t in zip(self.nuisance_names, theta):
-                scale = scale * (1.0 + t * self.nuisance_deltas[name])
-            s = s * scale
+                scale *= (1.0 + t * self.nuisance_deltas[name])
+            s = s0 * scale
+        return self.data_minus_sm - s if not self.hl_lhc else s
 
-        return s
-
-    def chi_square(self, g3g, g3gamma, theta=None):
-        """
-        Calculates the chi2 test statistic for given couplings and (optionally)
-        given nuisance-parameter values:
-
-            chi2(g3g, g3gamma, theta) = s(theta)^T V_inv s(theta) + sum_k theta_k^2
-
-        The sum_k theta_k^2 term is the Gaussian constraint ("penalty") that
-        keeps each nuisance parameter close to its nominal value of 0 unless
-        the fit to data actually prefers otherwise. With theta=None this is
-        identical to the original chi2 (Eq. 8 in the paper).
-
-        Args:
-            g3g (float): Dipole coupling to gluons
-            g3gamma (float): Dipole coupling to photons
-            theta (array-like, optional): nuisance parameter values
-
-        Returns:
-            float: The chi2 value.
-        """
-        s_vec = self.get_signal_vector(g3g, g3gamma, theta)
-        chi2_val = s_vec @ self.V_inv @ s_vec
-
-        if theta is not None:
-            chi2_val = chi2_val + np.sum(np.square(theta))
-
-        return chi2_val
+    def chi_square(self, s0, theta=None):
+        s_vec = self.get_signal_vector(s0, theta)
+        val = s_vec @ self.V_inv @ s_vec
+        return val + np.sum(np.square(theta)) if theta is not None else val
 
     def profile_chi_square(self, g3g, g3gamma):
-        """
-        Profiles out the nuisance parameters at fixed (g3g, g3gamma):
-
-            chi2_prof(g3g, g3gamma) = min_theta chi2(g3g, g3gamma, theta)
-
-        This is the quantity that should now be compared to the chi2_95
-        (or chi2_68) threshold -- the number of degrees of freedom used for
-        that threshold does NOT change: profiling nuisance parameters out
-        does not add degrees of freedom to the test of (g3g, g3gamma), it
-        only lets each nuisance pull the prediction within its constraint
-        while doing so.
-
-        Returns:
-            float: minimized chi2 value.
-        """
-        n_nuisance = len(self.nuisance_names)
-        theta0 = np.zeros(n_nuisance)
-
-        result = minimize(
-            lambda theta: self.chi_square(g3g, g3gamma, theta),
-            theta0,
-            method="BFGS",
-        )
-
+        s0 = self._compute_nominal_signal(g3g, g3gamma)   # computed ONCE per grid point
+        theta0 = np.zeros(len(self.nuisance_names))
+        result = minimize(lambda th: self.chi_square(s0, th), theta0, method="BFGS")
         return result.fun
 
-    # def find_contour(self, g3g_range=(0, 10), g3gamma_range=(0, 10), n_points=200):
-    #     """
-    #     Scans the (g3g, g3gamma) parameter space and finds the 95% CL contour,
-    #     using the profiled chi2 (nuisance parameters minimized out at every
-    #     grid point).
-
-    #     Args:
-    #         g3g_range (tuple): (min, max) range for g3g scan.
-    #         g3gamma_range (tuple): (min, max) range for g3gamma scan.
-    #         n_points (int): Number of points along each axis.
-
-    #     Returns:
-    #         tuple: (X, Y, Z) meshgrid arrays and the chi2 values on the grid.
-    #     """
-    #     g3g_vals = np.linspace(g3g_range[0], g3g_range[1], n_points)
-    #     g3gamma_vals = np.linspace(g3gamma_range[0], g3gamma_range[1], n_points)
-    #     G3g, G3gamma = np.meshgrid(g3g_vals, g3gamma_vals)
-    #     Chi2Grid = np.zeros_like(G3g)
-
-    #     # Calculate profiled chi2 for each point in the grid
-    #     for i, g3g_val in enumerate(g3g_vals):
-    #         for j, g3gamma_val in enumerate(g3gamma_vals):
-    #             # Avoid (0, 0) to prevent division by zero in BR calculation
-    #             if g3g_val == 0 and g3gamma_val == 0:
-    #                 Chi2Grid[j, i] = 0
-    #             else:
-    #                 Chi2Grid[j, i] = self.profile_chi_square(g3g_val, g3gamma_val)
-
-    #     return G3g, G3gamma, Chi2Grid
-
-
-    # Add this function before the ComputeLimit class or at the top of compute_limit.py
     def create_nonuniform_points(self, start, end, breakpoints, spacings):
         """
         Creates non-uniform grid points with different spacings in different regions.
@@ -237,15 +149,18 @@ class ComputeLimit:
         Returns:5
             tuple: (X, Y, Z) meshgrid arrays and the chi2 values on the grid.
         """
+        
         # g3g_vals = np.linspace(g3g_range[0], g3g_range[1], n_points)
         # g3gamma_vals = np.linspace(g3gamma_range[0], g3gamma_range[1], n_points)
-        # Define breakpoints and spacings for non-uniform grid
-        # breakpoints = [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 10]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
-        # spacings = [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1, 1000] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
-        # breakpoints = [20, 100]  # Where spacing changes
-        # spacings = [0.4, 1.0, 4.0]  # Spacing in each region: 0-20, 20-100, 100-end
-        breakpoints = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
-        spacings = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 2e1] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
+        # G3g, G3gamma = np.meshgrid(g3g_vals, g3gamma_vals)
+        
+        
+        breakpoints = [1e-59, 1e-58, 1e-57, 1e-56, 1e-55, 1e-54, 10]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        spacings = [1e-60, 1e-59, 1e-58, 1e-57, 1e-56, 1e-55, 1, 1000] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
+        # breakpoints = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        # spacings = [5e-7, 5e-6, 5e-5, 5e-4, 5e-3, 5e-2, 0.5, 3, 5] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
+        # breakpoints = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        # spacings = [5e-7, 5e-6, 5e-5, 5e-4, 5e-3, 5e-2, 0.5, 3, 100]
         
         g3g_vals = self.create_nonuniform_points(
             g3g_range[0], g3g_range[1], breakpoints, spacings
