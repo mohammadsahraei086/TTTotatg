@@ -151,6 +151,7 @@ def main():
         'axes.labelsize': 16,
         'axes.titlesize': 16,
     })
+    plt.rcParams['text.usetex'] = True
 
     
     HL_LHC = True
@@ -220,18 +221,7 @@ def main():
                 plt.contour(Yp_hl, Xp_hl, Z_hl-Z_hl_min, levels=[chi2_95], colors=[colors[i]],
                             linewidths=2, linestyles='dashed')
                 print("MIN_HL = ", np.min(Z_hl))
-                mass_legend_handles.append(Line2D([0], [0],
-                                                  color='black',
-                                                  lw=2,
-                                                  linestyle='solid',
-                                                  label=fr'LHC (138 fb$^{{-1}})$')
-                                          )
-                mass_legend_handles.append(Line2D([0], [0],
-                                                  color='black',
-                                                  lw=2,
-                                                  linestyle='dashed',
-                                                  label=fr'HL-LHC (3000 fb$^{{-1}})$')
-                                          )
+
                 if untruncated:
                     ax.text(
                         0.052, 1.03,
@@ -292,7 +282,7 @@ def main():
                         #r'$\mathbf{95\%\ CL\ exclusion}$' +
                         #r'$, 140\ \mathrm{fb}^{-1} \ $' +
                         r'$\mathbf{t\bar{t}\gamma}$' +
-                        r' , $\mathbf{Untruncated vs. Truncated\ Limits}$',
+                        r' , $\mathbf{Untruncated\ vs. Truncated\ Limits}$',
                         transform=ax.transAxes,
                         fontsize=16,
                         ha='left',
@@ -304,13 +294,6 @@ def main():
                             alpha=0.7
                         )
                     )
-                    mass_legend_handles.append(Line2D([0], [0],
-                                                      color='black',
-                                                      lw=2,
-                                                      linestyle='dashdot',
-                                                      label=fr'$\mathrm{{Truncated}}$'
-                                                     )
-                                              )
                 
                 else:
                     X, Y, Z = get_contour(mass, var, g3g_range, g3gamma_range, n_points, kfactor=1.4, hl_lhc = HL_LHC, untruncated=untruncated)
@@ -414,19 +397,27 @@ def main():
             patch = Line2D([0], [0], color=colors[i], lw=2, label=fr'$m_T = {mass:.0f}\ \mathrm{{GeV}}$')
             mass_legend_handles.append(patch)
 
-        # if HL_LHC and LHC:
-        #     mass_legend_handles.append(Line2D([0], [0],
-        #                                       color='black',
-        #                                       lw=2,
-        #                                       linestyle='solid',
-        #                                       label=fr'HL-LHC (138 fb$^{{-1}})$')
-        #                               )
-        #     mass_legend_handles.append(Line2D([0], [0],
-        #                                       color='black',
-        #                                       lw=2,
-        #                                       linestyle='dashed',
-        #                                       label=fr'HL-LHC (3000 fb$^{{-1}})$')
-        #                               )
+        if truncated and untruncated:
+            mass_legend_handles.append(Line2D([0], [0],
+                                                      color='black',
+                                                      lw=2,
+                                                      linestyle='dashdot',
+                                                      label=fr'$\mathrm{{Truncated}}$'
+                                                     )
+                                              )
+        if HL_LHC and LHC:
+            mass_legend_handles.append(Line2D([0], [0],
+                                              color='black',
+                                              lw=2,
+                                              linestyle='solid',
+                                              label=fr'HL-LHC (138 fb$^{{-1}})$')
+                                      )
+            mass_legend_handles.append(Line2D([0], [0],
+                                              color='black',
+                                              lw=2,
+                                              linestyle='dashed',
+                                              label=fr'HL-LHC (3000 fb$^{{-1}})$')
+                                      )
 
         if SHOW_WIDTH_VALIDITY_BAND_0p1:
             mass_legend_handles.append(Line2D([0], [0],
