@@ -13,22 +13,22 @@ def _profile_worker(compute_limit_obj, g3g_val, g3gamma_val):
     re-runs the same nuisance-parameter minimization your original
     find_contour loop did serially, for one (g3g, g3gamma) grid point.
     """
-    if g3g_val == 0 and g3gamma_val == 0:
-        return 0.0
+    # if g3g_val == 0 and g3gamma_val == 0:
+    #     return 0.0
     return compute_limit_obj.profile_chi_square(g3g_val, g3gamma_val)
 
 
 class ComputeLimit:
-    def __init__(self, mass, var, in_br=False, kfactor=1.0, from_bin=3, hl_lhc = False):
-        self.in_br = in_br
+    def __init__(self, mass, var, kfactor=1.0, from_bin=3, hl_lhc = False, untruncated = False):
         self.mass = mass
         self.var = var
         self.kfactor = kfactor
         self.hl_lhc = hl_lhc
         self.from_bin = from_bin
+        self.untruncated = untruncated
         
         self.width_factor = width_prefactor(mass)
-        self.width_wb = gen_val[f"Signal_{mass}"]["width_wb"]
+        self.width_wb = width_wb(mass)
 
         self.a0, self.a1, self.a2 = xsec_factors(mass)
 
@@ -51,9 +51,13 @@ class ComputeLimit:
 
     def compute_xsec(self, g3g, g3gamma):
         
-        eft_eff1, eft_eff2 = compute_eft_eff(self.mass, g3g, g3gamma, self.from_bin+1)
-        xsec1 = self.a0 * np.ones_like(eft_eff1) * self.kfactor + self.a1 * eft_eff1 * g3g ** 2 + self.a2 * eft_eff1 * g3g ** 4
-        xsec2 = self.a0 * np.ones_like(eft_eff2) * self.kfactor + self.a1 * eft_eff2 * g3g ** 2 + self.a2 * eft_eff2 * g3g ** 4
+        if not self.untruncated:
+            eft_eff1, eft_eff2 = compute_eft_eff(self.mass, g3g, g3gamma, self.from_bin+1)
+            xsec1 = self.a0 * np.ones_like(eft_eff1) * self.kfactor + self.a1 * eft_eff1 * g3g ** 2 + self.a2 * eft_eff1 * g3g ** 4
+            xsec2 = self.a0 * np.ones_like(eft_eff2) * self.kfactor + self.a1 * eft_eff2 * g3g ** 2 + self.a2 * eft_eff2 * g3g ** 4
+        else:
+            xsec1 = self.a0  * self.kfactor + self.a1  * g3g ** 2 + self.a2  * g3g ** 4
+            xsec2 = xsec1
 
         return xsec1 * 1000, xsec2* 1000
     
@@ -150,17 +154,17 @@ class ComputeLimit:
             tuple: (X, Y, Z) meshgrid arrays and the chi2 values on the grid.
         """
         
-        # g3g_vals = np.linspace(g3g_range[0], g3g_range[1], n_points)
-        # g3gamma_vals = np.linspace(g3gamma_range[0], g3gamma_range[1], n_points)
-        # G3g, G3gamma = np.meshgrid(g3g_vals, g3gamma_vals)
+        # breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        # spacings = [5e-5, 5e-4, 5e-3, 5e-2, 5e-1, 3e-0, 6]
         
-        
-        breakpoints = [1e-59, 1e-58, 1e-57, 1e-56, 1e-55, 1e-54, 10]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
-        spacings = [1e-60, 1e-59, 1e-58, 1e-57, 1e-56, 1e-55, 1, 1000] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
-        # breakpoints = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
-        # spacings = [5e-7, 5e-6, 5e-5, 5e-4, 5e-3, 5e-2, 0.5, 3, 5] # , 1e-4, 0.0001, 0.001, 0.01, 0.1, 1, 3, 1000
-        # breakpoints = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
-        # spacings = [5e-7, 5e-6, 5e-5, 5e-4, 5e-3, 5e-2, 0.5, 3, 100]
+        if self.mass < 1200:
+            breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
+            spacings = [2.5e-5, 2.5e-4, 2.5e-3, 2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
+        else:
+            breakpoints = [1e-0, 1e1, 2e1, 1e2]  
+            spacings = [2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
+        # breakpoints = [1e-0, 1e1, 2e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        # spacings = [2.5e-2, 2.5e-1, 2.5e-0, 5, 10]
         
         g3g_vals = self.create_nonuniform_points(
             g3g_range[0], g3g_range[1], breakpoints, spacings
@@ -171,9 +175,6 @@ class ComputeLimit:
         
         G3g, G3gamma = np.meshgrid(g3g_vals, g3gamma_vals)
 
-        # Build the flat list of (i, j, g3g_val, g3gamma_val) tasks up front so
-        # the parallel results (which come back in the same order they were
-        # submitted) can be dropped straight back into the grid.
         tasks = [
             (i, j, g3g_val, g3gamma_val)
             for i, g3g_val in enumerate(g3g_vals)

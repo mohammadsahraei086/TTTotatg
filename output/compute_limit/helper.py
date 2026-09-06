@@ -89,6 +89,23 @@ def width_prefactor(mass):
     print("Width prefactor:", result)
     return result[0][0]
 
+def width_wb(Mu4):
+    MHDO = 5000.0   # Lambda, in GeV (5 TeV)
+    fvec3 = 0.1
+    MT = 172.0
+    MB = 4.7
+    MW = 80.5
+
+    sqrt_arg = (MB**4 - 2*MB**2*Mu4**2 + Mu4**4 - 2*MB**2*MW**2 - 2*Mu4**2*MW**2 + MW**4)
+    sqrt_arg = max(sqrt_arg, 0.0)  # guard against a below-threshold mass; should not trigger for Mu4 >> MB+MW
+    term_bW = (((48*fvec3**2*MB**4)/MHDO**2 - (96*fvec3**2*MB**2*Mu4**2)/MHDO**2
+                + (48*fvec3**2*Mu4**4)/MHDO**2 - (24*fvec3**2*MB**2*MW**2)/MHDO**2
+                - (144*fvec3**2*MB*Mu4*MW**2)/MHDO**2 - (24*fvec3**2*Mu4**2*MW**2)/MHDO**2
+                - (24*fvec3**2*MW**4)/MHDO**2) * np.sqrt(sqrt_arg)
+               / (96.*np.pi*abs(Mu4)**3))
+
+    return term_bW
+
 
 def xsec_factors(mass):
     g = gen_val[f"Signal_{mass}"]["g"]
@@ -98,9 +115,8 @@ def xsec_factors(mass):
     print("Fit error:", result[1])
     return result[0][0], result[0][1], result[0][2]
 
-
+data = load("../output.coffea")
 def generation_info(mass, var, from_bin=5):
-    data = load("../output.coffea")
     hist_dict = data['hists']['total'][var]
     nominal_gamma, nominal_gammagamma, uncertainties = com_sys(hist_dict, mass, from_bin)
 
@@ -123,10 +139,12 @@ def _values_with_overflow(hist_obj, category, from_bin=1):
     
     return core
     
-data = load("../output.coffea")
 def compute_eft_eff(mass, g3g, g3gamma, from_bin):
     factor = 0.1/5000
-    lambda_eff = 1/np.sqrt((factor * g3g) ** 2 + (factor * g3gamma) ** 2)
+    if (g3g == 0) and (g3gamma == 0):
+        lambda_eff = 1e10
+    else:
+        lambda_eff = 1/np.sqrt((factor * g3g) ** 2 + (factor * g3gamma) ** 2)
 
     eff = []
     for smpl in ["Signal", "ttaa"]:
