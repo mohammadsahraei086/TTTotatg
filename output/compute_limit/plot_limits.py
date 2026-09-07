@@ -167,8 +167,8 @@ def main():
     plt.rcParams['text.usetex'] = True
 
     
-    HL_LHC = True
-    LHC = False
+    HL_LHC = False
+    LHC = True
     untruncated = True
     truncated = True
     SHOW_WIDTH_VALIDITY_BAND_0p1 = False

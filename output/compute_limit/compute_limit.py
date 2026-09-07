@@ -157,9 +157,12 @@ class ComputeLimit:
         # breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
         # spacings = [5e-5, 5e-4, 5e-3, 5e-2, 5e-1, 3e-0, 6]
         
-        if self.mass < 1200:
+        if self.mass < 700:
             breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
             spacings = [2.5e-5, 2.5e-4, 2.5e-3, 2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
+        elif self.mass < 1200:
+            breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
+            spacings = [2.5e-5, 2.5e-4, 2.5e-3, 2.5e-2, 2.5e-1, 1e-0, 2, 5]
         else:
             breakpoints = [1e-0, 1e1, 2e1, 1e2]  
             spacings = [2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
