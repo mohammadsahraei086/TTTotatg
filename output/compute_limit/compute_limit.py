@@ -13,8 +13,8 @@ def _profile_worker(compute_limit_obj, g3g_val, g3gamma_val):
     re-runs the same nuisance-parameter minimization your original
     find_contour loop did serially, for one (g3g, g3gamma) grid point.
     """
-    # if g3g_val == 0 and g3gamma_val == 0:
-    #     return 0.0
+    if g3g_val == 0 and g3gamma_val == 0:
+        return np.inf
     return compute_limit_obj.profile_chi_square(g3g_val, g3gamma_val)
 
 
@@ -154,18 +154,19 @@ class ComputeLimit:
             tuple: (X, Y, Z) meshgrid arrays and the chi2 values on the grid.
         """
         
-        # breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
-        # spacings = [5e-5, 5e-4, 5e-3, 5e-2, 5e-1, 3e-0, 6]
+        breakpoints = [1e-26, 1e-25, 1e-24, 1e-23, 1e-22, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
+        spacings = [5e-28, 5e-27, 5e-26, 5e-25, 5e-24, 5e-1, 3e-0, 1000]
         
-        if self.mass < 700:
-            breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
-            spacings = [2.5e-5, 2.5e-4, 2.5e-3, 2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
-        elif self.mass < 1200:
-            breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
-            spacings = [2.5e-5, 2.5e-4, 2.5e-3, 2.5e-2, 2.5e-1, 1e-0, 2, 5]
-        else:
-            breakpoints = [1e-0, 1e1, 2e1, 1e2]  
-            spacings = [2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
+        # if self.mass < 700:
+        #     breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
+        #     spacings = [2.5e-5, 2.5e-4, 2.5e-3, 2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
+        # elif self.mass < 1200:
+        #     breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
+        #     spacings = [2.5e-5, 2.5e-4, 2.5e-3, 2.5e-2, 2.5e-1, 1e-0, 2, 5]
+        # else:
+        #     breakpoints = [1e-0, 1e1, 2e1, 1e2]  
+        #     spacings = [2.5e-2, 2.5e-1, 2.5e-0, 5, 9]
+        
         # breakpoints = [1e-0, 1e1, 2e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
         # spacings = [2.5e-2, 2.5e-1, 2.5e-0, 5, 10]
         

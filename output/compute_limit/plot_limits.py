@@ -164,7 +164,7 @@ def main():
         'axes.labelsize': 16,
         'axes.titlesize': 16,
     })
-    plt.rcParams['text.usetex'] = True
+    # plt.rcParams['text.usetex'] = True
 
     
     HL_LHC = False
@@ -177,9 +177,9 @@ def main():
 
     # 'log' or 'linear' -- switches both x and y axes together.
     AXIS_SCALE = 'log'
-    LOG_AXIS_MIN = 1e-7  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
+    LOG_AXIS_MIN = 1e-34  # only used when AXIS_SCALE == 'log' (log axes can't show 0)
 
-    mass_points = [500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]  # 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000
+    mass_points = [1000]  # 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000
 
     # First entry is the reference case; further entries are outline-only
     # contours with the next linestyle, same color as their mass.
