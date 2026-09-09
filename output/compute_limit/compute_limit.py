@@ -42,7 +42,7 @@ class ComputeLimit:
         width_tg = self.width_factor * g3g ** 2
         width_tgamma = (3 / 4) * self.width_factor * g3gamma ** 2
 
-        Gamma_total = width_tg + width_tgamma + self.width_wb
+        Gamma_total = width_tg + width_tgamma #+ self.width_wb
 
         B_g = width_tg / Gamma_total
         B_gamma = width_tgamma / Gamma_total
@@ -154,8 +154,8 @@ class ComputeLimit:
             tuple: (X, Y, Z) meshgrid arrays and the chi2 values on the grid.
         """
         
-        breakpoints = [1e-26, 1e-25, 1e-24, 1e-23, 1e-22, 1e1, 1e2]  # Where spacing changes , 0.001, 0.01, 0.1, 1, 20, 100
-        spacings = [5e-28, 5e-27, 5e-26, 5e-25, 5e-24, 5e-1, 3e-0, 1000]
+        breakpoints = [1e-1, 1e-0, 1e1, 2e1, 1e2]
+        spacings = [2.5e-3, 2.5e-2, 2.5e-1, 2.5e-0, 10, 20]
         
         # if self.mass < 700:
         #     breakpoints = [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 2e1, 1e2]  
