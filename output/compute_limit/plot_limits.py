@@ -164,11 +164,12 @@ def main():
         'axes.labelsize': 16,
         'axes.titlesize': 16,
     })
-    # plt.rcParams['text.usetex'] = True
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 
     
-    HL_LHC = False
-    LHC = True
+    HL_LHC = True
+    LHC = False
     untruncated = False
     truncated = True
     SHOW_WIDTH_VALIDITY_BAND_0p1 = True
@@ -496,6 +497,18 @@ def main():
         else:
             raise ValueError(f"AXIS_SCALE must be 'log' or 'linear', got {AXIS_SCALE!r}")
 
+        EXCLUDED = r'$\mathbf{Excluded}$' + '\n' + r'$\mathbf{at \ 95\% \ CL}$'
+ 
+        ax.text(0.5, 0.25,
+                EXCLUDED,
+                transform=ax.transAxes,
+                fontsize=18,
+                ha='center',
+                va='bottom',
+                # rotation=45,
+                bbox=dict(boxstyle='round,pad=0.4', facecolor='white',
+                           edgecolor='gray', alpha=0.7))
+
         ax.set_ylabel(r"$c_{tg}\ [\mathrm{GeV}^{-1}]$"     , fontsize=18)
         ax.set_xlabel(r"$c_{t\gamma}\ [\mathrm{GeV}^{-1}]$", fontsize=18)
         ax.grid(True, which='major', linestyle='-', linewidth=0.7, alpha=0.3)
@@ -542,7 +555,7 @@ def main():
                     plt.savefig(f"hl_plots/tta_truncated_limits.png")
                     plt.savefig(f"hl_plots/tta_truncated_limits.pdf")
                 if SHOW_WIDTH_VALIDITY_BAND_0p1:
-                    plt.savefig(f"hl_plots/tta_truncated_limits_with_Gamma_over_m_0p1.png")
+                    # plt.savefig(f"hl_plots/tta_truncated_limits_with_Gamma_over_m_0p1.png")
                     plt.savefig(f"hl_plots/tta_truncated_limits_with_Gamma_over_m_0p1.pdf")
                 if SHOW_WIDTH_VALIDITY_BAND_0p3:
                     plt.savefig(f"hl_plots/tta_truncated_limits_with_Gamma_over_m_0p3.png")
@@ -566,7 +579,7 @@ def main():
                     plt.savefig(f"lhc_plots/tta_truncated_limits.png")
                     plt.savefig(f"lhc_plots/tta_truncated_limits.pdf")
                 if SHOW_WIDTH_VALIDITY_BAND_0p1:
-                    plt.savefig(f"lhc_plots/tta_truncated_limits_with_Gamma_over_m_0p1.png")
+                    # plt.savefig(f"lhc_plots/tta_truncated_limits_with_Gamma_over_m_0p1.png")
                     plt.savefig(f"lhc_plots/tta_truncated_limits_with_Gamma_over_m_0p1.pdf")
                 if SHOW_WIDTH_VALIDITY_BAND_0p3:
                     plt.savefig(f"lhc_plots/tta_truncated_limits_with_Gamma_over_m_0p3.png")
